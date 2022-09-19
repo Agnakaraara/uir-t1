@@ -45,7 +45,7 @@ class HexapodController:
             print(target_to_goal)
 
             targ_heading = np.arctan2(diff.y, diff.x)
-            cur_heading = odometry.pose.orientation.to_Euler()[-1]       # z
+            cur_heading = odometry.pose.orientation.to_Euler()[0]       # quaternion -> euler angle
 
             diff_h = targ_heading - cur_heading
             diff_h = (diff_h + math.pi) % (2*math.pi) - math.pi
