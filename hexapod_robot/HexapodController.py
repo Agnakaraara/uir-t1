@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import math
 
 import numpy as np
 
@@ -27,10 +28,32 @@ class HexapodController:
         """
         # zero velocity steering command
         cmd_msg = Twist()
-
+        #cmd_msg.linear.x = 0.5
+        #cmd_msg.angular.z = 0.5
         #TODO: if input data are valid, calculate the steering command
-        
-        return cmd_msg            
+
+        if collision:
+            return None
+
+        if goal is not None and odometry is not None:
+            diff = goal.position - odometry.pose.position
+            target_to_goal = diff.norm()
+            is_in_goal = target_to_goal < DELTA_DISTANCE
+            if is_in_goal:
+                return None
+
+            print(target_to_goal)
+
+            targ_heading = np.arctan2(diff.y, diff.x)
+            cur_heading = odometry.pose.orientation.to_Euler()[-1]       # z
+
+            diff_h = targ_heading - cur_heading
+            diff_h = (diff_h + math.pi) % (2*math.pi) - math.pi
+
+            cmd_msg.linear.x = target_to_goal
+            cmd_msg.angular.z = diff_h * C_TURNING_SPEED
+
+        return cmd_msg
 
 
     def goto_reactive(self, goal, odometry, collision, laser_scan):
