@@ -87,6 +87,11 @@ class HexapodController:
             diff_h = (diff_h + math.pi) % (2*math.pi) - math.pi
 
             cmd_msg.linear.x = target_to_goal
-            cmd_msg.angular.z = diff_h * C_TURNING_SPEED
+
+            scan_left = np.min(laser_scan.distances[:len(laser_scan.distances)//2])  # distance to the closest obstacle to the left of the robot
+            scan_right = np.min(laser_scan.distances[len(laser_scan.distances)//2:])  # distance to the closest obstacle to the right of the robot
+            repulsive_force = 1/scan_left - 1/scan_right
+
+            cmd_msg.angular.z = diff_h * C_TURNING_SPEED + repulsive_force * C_AVOID_SPEED
 
         return cmd_msg
