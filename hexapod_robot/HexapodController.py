@@ -66,32 +66,13 @@ class HexapodController:
             cmd: Twist steering command
         """
         #zero velocity steering command
-        cmd_msg = Twist()
+        cmd_msg = self.goto(goal, odometry, collision)
 
-        if collision:
-            return None
-
-        if goal is not None and odometry is not None:
-            diff = goal.position - odometry.pose.position
-            target_to_goal = diff.norm()
-            is_in_goal = target_to_goal < DELTA_DISTANCE
-            if is_in_goal:
-                return None
-
-            print(target_to_goal)
-
-            targ_heading = np.arctan2(diff.y, diff.x)
-            cur_heading = odometry.pose.orientation.to_Euler()[0]       # quaternion -> euler angle
-
-            diff_h = targ_heading - cur_heading
-            diff_h = (diff_h + math.pi) % (2*math.pi) - math.pi
-
-            cmd_msg.linear.x = target_to_goal
-
+        if laser_scan is not None and cmd_msg is not None:
             scan_left = np.min(laser_scan.distances[:len(laser_scan.distances)//2])  # distance to the closest obstacle to the left of the robot
             scan_right = np.min(laser_scan.distances[len(laser_scan.distances)//2:])  # distance to the closest obstacle to the right of the robot
             repulsive_force = 1/scan_left - 1/scan_right
 
-            cmd_msg.angular.z = diff_h * C_TURNING_SPEED + repulsive_force * C_AVOID_SPEED
+            cmd_msg.angular.z += repulsive_force * C_AVOID_SPEED
 
         return cmd_msg
