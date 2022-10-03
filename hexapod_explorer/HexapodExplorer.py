@@ -39,14 +39,17 @@ class HexapodExplorer:
         """
         grid_map_update = copy.deepcopy(grid_map)
 
+        if laser_scan is None or odometry is None:
+            return grid_map_update
+
         #TODO:[t1c_map] fuse the correctly aligned laser data into the probabilistic occupancy grid map
 
         P: [float] = laser_scan.distances
         angle_min = laser_scan.angle_min
         angle_increment = laser_scan.angle_increment
-        robot_position = odometry.pose.position[:2]  # just x,y
+        robot_position = np.array([odometry.pose.position.x, odometry.pose.position.y])  # just x,y
         robot_angle = odometry.pose.orientation.to_Euler()[0]
-        grid_origin = grid_map.origin
+        grid_origin = np.array([grid_map.origin.position.x, grid_map.origin.position.y])
         grid_resolution = grid_map.resolution
         grid_width = grid_map.width
         grid_height = grid_map.height
@@ -54,14 +57,14 @@ class HexapodExplorer:
         c, s = np.cos(robot_angle), np.sin(robot_angle)
         R = np.array(((c, -s), (s, c)))
 
-        for i in P:
+        for i in range(0, len(P)):
             P[i] = np.array([math.cos(angle_min + i*angle_increment) * P[i], math.sin(angle_min + i*angle_increment) * P[i]])
-            P[i] = R*P[i] + robot_position
+            P[i] = R@P[i] + robot_position
             P[i] = self.world_to_map(P[i], grid_origin, grid_resolution)
-            P[i][0] = np.max(0, np.min(grid_width-1, P[i][0]))
-            P[i][1] = np.max(0, np.min(grid_height-1, P[i][1]))
+            P[i][0] = max(0, min(grid_width-1, P[i][0]))
+            P[i][1] = max(0, min(grid_height-1, P[i][1]))
 
-        odom_map = self.world_to_map(odometry.position, grid_origin, grid_resolution)
+        odom_map = self.world_to_map(robot_position, grid_origin, grid_resolution)
         laser_scan_points_map = P
 
         free_points = []
@@ -89,7 +92,7 @@ class HexapodExplorer:
 
 
     def world_to_map(self, p, grid_origin, grid_resolution):
-        return np.round((p - grid_origin) / grid_resolution)
+        return np.round((p - grid_origin) / grid_resolution).astype(int)
 
     def update_free(self, P_mi):
         """method to calculate the Bayesian update of the free cell with the current occupancy probability value P_mi
