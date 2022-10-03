@@ -48,18 +48,17 @@ class HexapodExplorer:
         angle_min = laser_scan.angle_min
         angle_increment = laser_scan.angle_increment
         robot_position = np.array([odometry.pose.position.x, odometry.pose.position.y])  # just x,y
-        robot_angle = odometry.pose.orientation.to_Euler()[0]
+        robot_rotation_matrix = odometry.pose.orientation.to_R()[0:2, 0:2]
         grid_origin = np.array([grid_map.origin.position.x, grid_map.origin.position.y])
         grid_resolution = grid_map.resolution
         grid_width = grid_map.width
         grid_height = grid_map.height
 
-        c, s = np.cos(robot_angle), np.sin(robot_angle)
-        R = np.array(((c, -s), (s, c)))
-
         for i in range(0, len(P)):
+            if P[i] < laser_scan.range_min: P[i] = laser_scan.range_min
+            if P[i] > laser_scan.range_max: P[i] = laser_scan.range_max
             P[i] = np.array([math.cos(angle_min + i*angle_increment) * P[i], math.sin(angle_min + i*angle_increment) * P[i]])
-            P[i] = R@P[i] + robot_position
+            P[i] = robot_rotation_matrix @ np.transpose(P[i]) + robot_position
             P[i] = self.world_to_map(P[i], grid_origin, grid_resolution)
             P[i][0] = max(0, min(grid_width-1, P[i][0]))
             P[i][1] = max(0, min(grid_height-1, P[i][1]))
@@ -79,11 +78,11 @@ class HexapodExplorer:
 
         data = grid_map.data.reshape(grid_map_update.height, grid_map_update.width)
 
-        for free_point in free_points:
-            data[free_point[0], free_point[1]] = self.update_free(data[free_point[0], free_point[1]])
+        for (x, y) in free_points:
+            data[y, x] = self.update_free(data[y, x])
 
-        for occupied_point in occupied_points:
-            data[occupied_point[0], occupied_point[1]] = self.update_occupied(data[occupied_point[0], occupied_point[1]])
+        for (x, y) in occupied_points:
+            data[y, x] = self.update_occupied(data[y, x])
 
         #serialize the data back (!watch for the correct width and height settings if you are doing the harder assignment)
         grid_map_update.data = data.flatten()
@@ -111,10 +110,7 @@ class HexapodExplorer:
 
         p_mi = (p_z_mi_occupied * p_mi_occupied)/(p_z_mi_occupied*p_mi_occupied + p_z_mi_free*p_mi_free)
 
-        if p_mi == 0:
-            p_mi = 0.01
-
-        return p_mi
+        return max(0.05, p_mi) #never let p_mi get to 0
 
     def update_occupied(self, P_mi):
         """method to calculate the Bayesian update of the occupied cell with the current occupancy probability value P_mi
@@ -132,10 +128,7 @@ class HexapodExplorer:
 
         p_mi = (p_z_mi_occupied * p_mi_occupied)/(p_z_mi_occupied*p_mi_occupied + p_z_mi_free*p_mi_free)
 
-        if p_mi == 0:
-            p_mi = 0.01
-
-        return p_mi
+        return min(p_mi, 0.95) #never let p_mi get to 1
 
     def find_free_edge_frontiers(self, grid_map):
         """Method to find the free-edge frontiers (edge clusters between the free and unknown areas)
