@@ -1,6 +1,5 @@
 import math
 from heapq import heappush, heappop
-from utils import dist2d
 
 
 def _get_movements_4n():
@@ -106,7 +105,7 @@ def a_star(start_m, goal_m, gmap, movement='8N', occupancy_cost_factor=3):
 
             # add node to front if it was not visited before and is not an obstacle
             if (not gmap.is_visited_idx(new_pos)) and (not gmap.is_occupied_idx(new_pos)):
-                potential_function_cost = gmap.get_data_idx(new_pos)*occupancy_cost_factor
+                potential_function_cost = gmap.get_data_idx(new_pos) * occupancy_cost_factor
                 new_cost = cost + deltacost + potential_function_cost
                 new_total_cost_to_goal = new_cost + dist2d(new_pos, goal) + potential_function_cost
 
@@ -128,3 +127,19 @@ def a_star(start_m, goal_m, gmap, movement='8N', occupancy_cost_factor=3):
         path_idx.reverse()
 
     return path, path_idx
+
+
+def dist2d(point1, point2):
+    """
+    Euclidean distance between two points
+    :param point1:
+    :param point2:
+    :return:
+    """
+
+    x1, y1 = point1[0:2]
+    x2, y2 = point2[0:2]
+
+    dist2 = (x1 - x2) ** 2 + (y1 - y2) ** 2
+
+    return math.sqrt(dist2)
