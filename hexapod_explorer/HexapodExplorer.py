@@ -228,7 +228,7 @@ class HexapodExplorer:
             result = a_star((start.position.x, start.position.y), (goal.position.x, goal.position.y), gmap)
         except:
             return None
-        
+
         for path_point in result[0]:
             pose = Pose()
             pose.position.x = path_point[0]
@@ -256,9 +256,37 @@ class HexapodExplorer:
         path_simplified.poses.append(path.poses[0])
         
         #TODO:[t1d-plan] simplifie the planned path
+
+        data = grid_map.data.reshape(grid_map.height, grid_map.width)
+
+        #iterate through the path and simplify the path
+        while not path_simplified.poses[-1] == path.poses[-1]: #until the goal is not reached
+            #find the connected segment
+            i = 0
+            previous_pose = path_simplified.poses[i]
+            for pose in path_simplified.poses[i+1:]:
+                i += 1
+                end = path_simplified.poses[-1]
+                line = self.bresenham_line((end.position.x, end.position.y), (pose.position.x, pose.position.y))
+                collide = False
+                for point in line:
+                    if data[point[1], point[0]] == 1:
+                        collide = True
+
+                if not collide: #there is no collision
+                    previous_pose = pose
+
+                    #the goal is reached
+                    if pose == path.poses[-1]:
+                        path_simplified.poses.append(pose)
+                        break
+
+                else: #there is collision
+                    path_simplified.poses.append(previous_pose)
+                    break
         
         #add the goal pose
-        path_simplified.poses.append(path.poses[-1])
+        # path_simplified.poses.append(path.poses[-1])
 
         return path_simplified
  
