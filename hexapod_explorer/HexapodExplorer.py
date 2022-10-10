@@ -216,7 +216,7 @@ class HexapodExplorer:
 
         path = Path()
         #add the start pose
-        path.poses.append(start)
+       # path.poses.append(start)
         
         #TODO:[t1d-plan] plan the path between the start and the goal Pose
 
@@ -236,7 +236,7 @@ class HexapodExplorer:
             path.poses.append(pose)
 
         #add the goal pose
-        path.poses.append(goal)
+      #  path.poses.append(goal)
 
         return path
 
@@ -250,7 +250,9 @@ class HexapodExplorer:
         """
         if grid_map == None or path == None:
             return None
- 
+
+        grid_origin = np.array([grid_map.origin.position.x, grid_map.origin.position.y])
+
         path_simplified = Path()
         #add the start pose
         path_simplified.poses.append(path.poses[0])
@@ -259,15 +261,17 @@ class HexapodExplorer:
 
         data = grid_map.data.reshape(grid_map.height, grid_map.width)
 
+        i = 1
+
         #iterate through the path and simplify the path
-        while not path_simplified.poses[-1] == path.poses[-1]: #until the goal is not reached
+        while path_simplified.poses[-1] != path.poses[-1]: #until the goal is not reached
             #find the connected segment
-            i = 0
-            previous_pose = path_simplified.poses[i]
-            for pose in path_simplified.poses[i+1:]:
-                i += 1
+            previous_pose = path_simplified.poses[-1]
+            for pose in path.poses[i:]:
                 end = path_simplified.poses[-1]
-                line = self.bresenham_line((end.position.x, end.position.y), (pose.position.x, pose.position.y))
+                end = self.world_to_map(np.array([end.position.x, end.position.y]), grid_origin, grid_map.resolution)
+                pose_point = self.world_to_map(np.array([pose.position.x, pose.position.y]), grid_origin, grid_map.resolution)
+                line = self.bresenham_line(end, pose_point)
                 collide = False
                 for point in line:
                     if data[point[1], point[0]] == 1:
@@ -275,6 +279,7 @@ class HexapodExplorer:
 
                 if not collide: #there is no collision
                     previous_pose = pose
+                    i += 1
 
                     #the goal is reached
                     if pose == path.poses[-1]:
