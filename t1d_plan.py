@@ -53,7 +53,7 @@ if __name__=="__main__":
                 ax.plot(poses[:,0], poses[:,1], '-',color=clr)
 
         fig, ax = plt.subplots()
-        gridmap.plot(ax)
+        gridmap_processed.plot(ax)
         plot_path(path, ax, 'r')
         plot_path(path_simple, ax, 'b')
         

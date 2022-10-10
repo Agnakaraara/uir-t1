@@ -10,6 +10,8 @@ import copy
 import cpg.oscilator_network as osc
 
 #import messages
+import scipy.ndimage
+
 from messages import *
 
 import matplotlib.pyplot as plt
@@ -166,6 +168,36 @@ class HexapodExplorer:
         grid_map_grow = copy.deepcopy(grid_map)
 
         #TODO:[t1d-plan] grow the obstacles for robot_size
+
+        data = grid_map.data.reshape(grid_map_grow.height, grid_map_grow.width)
+
+        ranges = data.copy()
+
+        for y in range(0, grid_map_grow.height):
+            for x in range(0, grid_map_grow.width):
+                p = data[y, x]
+                if p > 0.5:
+                    ranges[y, x] = 0
+                elif p == 0.5:
+                    ranges[y, x] = 0
+                else:
+                    ranges[y, x] = 1
+
+        ranges = scipy.ndimage.distance_transform_edt(ranges)
+
+        for y in range(0, grid_map_grow.height):
+            for x in range(0, grid_map_grow.width):
+                p = data[y, x]
+                if p > 0.5:
+                    data[y, x] = 1
+                elif p == 0.5:
+                    data[y, x] = 1
+                elif p < 0.5 and ranges[y, x]*grid_map_grow.resolution < robot_size:
+                    data[y, x] = 1
+                else:
+                    data[y, x] = 0
+
+        grid_map_grow.data = data.flatten()
 
         return grid_map_grow
 
