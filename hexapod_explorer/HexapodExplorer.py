@@ -12,6 +12,8 @@ import cpg.oscilator_network as osc
 #import messages
 import scipy.ndimage
 
+from hexapod_explorer.a_star import a_star
+from hexapod_explorer.gridmap import OccupancyGridMap
 from messages import *
 
 import matplotlib.pyplot as plt
@@ -217,7 +219,22 @@ class HexapodExplorer:
         path.poses.append(start)
         
         #TODO:[t1d-plan] plan the path between the start and the goal Pose
+
+        data = grid_map.data.reshape(grid_map.height, grid_map.width)
+
+        gmap = OccupancyGridMap(data, grid_map.resolution)
+
+        try:
+            result = a_star((start.position.x, start.position.y), (goal.position.x, goal.position.y), gmap)
+        except:
+            return None
         
+        for path_point in result[0]:
+            pose = Pose()
+            pose.position.x = path_point[0]
+            pose.position.y = path_point[1]
+            path.poses.append(pose)
+
         #add the goal pose
         path.poses.append(goal)
 
