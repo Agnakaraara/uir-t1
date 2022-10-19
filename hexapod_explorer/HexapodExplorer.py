@@ -12,7 +12,6 @@ import cpg.oscilator_network as osc
 # import messages
 import scipy.ndimage
 
-from hexapod_explorer.a_star import a_star
 from hexapod_explorer.gridmap import OccupancyGridMap
 from messages import *
 
@@ -475,8 +474,8 @@ class HexapodExplorer:
         path = Path()
 
         pose = Pose()
-        pose.position.x = start[0]
-        pose.position.y = start[1]
+        pose.position.x = start[0]+0.5
+        pose.position.y = start[1]+0.5
         path.poses.append(pose)
 
         u = start
@@ -485,8 +484,8 @@ class HexapodExplorer:
                 if self.g[s] < self.g[u]:
                     u = s
             pose = Pose()
-            pose.position.x = u[0]
-            pose.position.y = u[1]
+            pose.position.x = u[0]+0.5
+            pose.position.y = u[1]+0.5
             path.poses.append(pose)
 
         return path
