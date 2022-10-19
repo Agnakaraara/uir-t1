@@ -390,7 +390,7 @@ class HexapodExplorer:
 
         path = self.reconstruct_path(start, goal)
 
-        return path
+        return path, self.rhs, self.g
 
     # D-Star
 
@@ -459,7 +459,7 @@ class HexapodExplorer:
                 self.g[u] = np.inf
                 for s in self.neighbors8(u):
                     self.update_vertex(s, start, goal)
-                self.update_vertex(u)
+                self.update_vertex(u, start, goal)
 
     def reconstruct_path(self, start, goal):
         """Function to reconstruct the path
