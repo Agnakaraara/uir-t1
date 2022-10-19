@@ -142,7 +142,7 @@ class HexapodExplorer:
         return grid_map_update
 
     def world_to_map(self, p, grid_origin, grid_resolution):
-        return np.round((p - grid_origin) / grid_resolution).astype(int)
+        return ((p - grid_origin) / grid_resolution).astype(int)
 
     def update_free(self, P_mi):
         """method to calculate the Bayesian update of the free cell with the current occupancy probability value P_mi
@@ -354,6 +354,12 @@ class HexapodExplorer:
             path: Path - path between the start and goal Pose on the map
         """
 
+        grid_origin = np.array([grid_map.origin.position.x, grid_map.origin.position.y])
+        grid_resolution = grid_map.resolution
+
+        start = tuple(self.world_to_map(np.array([start.position.x, start.position.y]), grid_origin, grid_resolution))
+        goal = tuple(self.world_to_map(np.array([goal.position.x, goal.position.y]), grid_origin, grid_resolution))
+
         if not hasattr(self, 'rhs'):  # first run of the function
             self.rhs = np.full((grid_map.height, grid_map.width), np.inf)
             self.g = np.full((grid_map.height, grid_map.width), np.inf)
@@ -378,6 +384,9 @@ class HexapodExplorer:
                 self.U.put(element[1], self.calculate_key(element[1], goal))
 
         self.compute_shortest_path(start, goal)
+
+        if self.g[start] == np.inf:
+            return None
 
         path = self.reconstruct_path(start, goal)
 
@@ -413,7 +422,7 @@ class HexapodExplorer:
                goal: (int, int) - goal position
         """
         if u != goal:
-            mn = 999999999
+            mn = np.inf
             for s in self.neighbors8(u):
                 mn = min(mn, self.edge_cost(u, s) + self.g[s])
             self.rhs[u] = mn
@@ -423,7 +432,7 @@ class HexapodExplorer:
 
     def edge_cost(self, uFrom, uTo):
         if self.gridmap[uTo] == 1:
-            return 999999999
+            return np.inf
         else:
             return np.sqrt((uFrom[0] - uTo[0]) ** 2 + (uFrom[1] - uTo[1]) ** 2)
 
@@ -447,7 +456,7 @@ class HexapodExplorer:
                 for s in self.neighbors8(u):
                     self.update_vertex(s, start, goal)
             else:
-                self.g[u] = 999999999
+                self.g[u] = np.inf
                 for s in self.neighbors8(u):
                     self.update_vertex(s, start, goal)
                 self.update_vertex(u)
@@ -469,7 +478,7 @@ class HexapodExplorer:
         u = goal
         while u != start:
             for s in self.neighbors8(u):
-                if self.g[s] < self.g[next]:
+                if self.g[s] < self.g[u]:
                     u = s
             pose = Pose()
             pose.position.x = u[0]
@@ -483,9 +492,17 @@ class HexapodExplorer:
         Args:  coord : (int, int) - map coordinate
         Returns:  list (int,int) - list of neighbor coordinates
         """
-        return [(coord[0] + 1, coord[1]), (coord[0], coord[1] + 1), (coord[0] - 1, coord[1]), (coord[0], coord[1] - 1),
+        neighbours = []
+
+        raw8 = [(coord[0] + 1, coord[1]), (coord[0], coord[1] + 1), (coord[0] - 1, coord[1]), (coord[0], coord[1] - 1),
                 (coord[0] + 1, coord[1] + 1), (coord[0] - 1, coord[1] - 1), (coord[0] + 1, coord[1] - 1),
                 (coord[0] - 1, coord[1] + 1)]
+
+        for r in raw8:
+            if 0 <= r[0] < len(self.gridmap) and 0 <= r[1] < len(self.gridmap[1]) and self.gridmap[r] == 0:
+                neighbours.append(r)
+
+        return neighbours
 
     # Support stuff
 
