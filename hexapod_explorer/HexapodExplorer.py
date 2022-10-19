@@ -471,12 +471,12 @@ class HexapodExplorer:
         path = Path()
 
         pose = Pose()
-        pose.position.x = goal[0]
-        pose.position.y = goal[1]
+        pose.position.x = start[0]
+        pose.position.y = start[1]
         path.poses.append(pose)
 
-        u = goal
-        while u != start:
+        u = start
+        while u != goal:
             for s in self.neighbors8(u):
                 if self.g[s] < self.g[u]:
                     u = s
