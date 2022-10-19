@@ -26,6 +26,54 @@ import skimage.measure
 import collections
 import heapq
 
+
+import heapq
+
+
+class PriorityQueue:
+    def __init__(self):
+        self.elements = []
+
+    def empty(self):
+        return len(self.elements) == 0
+
+    def put(self, item, priority):
+        heapq.heappush(self.elements, (priority, item))
+
+    def pop(self):
+        return heapq.heappop(self.elements)[1]
+
+    def top(self):
+        u = self.elements[0]
+        return u[1]
+
+    def topKey(self):
+        u = self.elements[0]
+        return u[0]
+
+    def contains(self, element):
+        ret = False
+        for item in self.elements:
+            if element == item[1]:
+                ret = True
+                break
+        return ret
+
+    def print_elements(self):
+        print(self.elements)
+        return self.elements
+
+    def remove(self, element):
+        i = 0
+        for item in self.elements:
+            if element == item[1]:
+                self.elements[i] = self.elements[-1]
+                self.elements.pop()
+                heapq.heapify(self.elements)
+                break
+            i += 1
+
+
 class HexapodExplorer:
 
     def __init__(self):
@@ -313,9 +361,119 @@ class HexapodExplorer:
             self.rhs = np.full((grid_map.height, grid_map.width), np.inf)
             self.g = np.full((grid_map.height, grid_map.width), np.inf)
 
-        #TODO:[t1x-dstar] plan the incremental path between the start and the goal Pose
- 
-        return self.plan_path(grid_map, start, goal), self.rhs.flatten(), self.g.flatten()
+        self.initialize(goal)
+
+        self.compute_shortest_path(start, goal)
+
+        path = self.reconstruct_path(start, goal)
+
+        return path
+
+
+    # D-Star
+
+    gridmap = None
+    U: PriorityQueue = None
+
+
+    def calculate_key(self, coord, goal):
+        """method to calculate the priority queue key
+        Args:  coord: (int, int) - cell to calculate key for
+               goal: (int, int) - goal location
+        Returns:  (float, float) - major and minor key
+        """
+        # think about different heuristics and how they influence the steering of the algorithm
+        # heuristics = 0
+        # heuristics = L1 distance
+        # heuristics = L2 distance
+
+        return [min(self.g[coord], self.rhs[coord]), min(self.g[coord], self.rhs[coord])]
+
+
+    def initialize(self, goal):
+        self.U = PriorityQueue()
+        self.rhs[goal] = 0
+        self.U.put(goal, self.calculate_key(goal, goal))
+
+
+    def update_vertex(self, u, start, goal):
+        """ Function for map vertex updating
+        Args:  u: (int, int) - currently processed position
+               start: (int, int) - start position
+               goal: (int, int) - goal position
+        """
+        if u != goal:
+            mn = 999999999
+            for s in self.neighbors8(u):
+                mn = min(mn, np.sqrt((u[0]-s[0])**2 + (u[1]-s[1])**2) + self.g[s])
+            self.rhs[u] = mn
+        self.U.remove(u)
+        if self.g[u] != self.rhs[u]:
+            self.U.put(u, self.calculate_key(u, goal))
+
+
+
+    def compute_shortest_path(self, start, goal):
+        """Function to compute the shortest path
+        Args:  start: (int, int) - start position
+               goal: (int, int) - goal position
+        """
+        # while not finished
+        # fetch coordinates u from priority queue
+
+        # if g value at u > rhs value at u:
+        # node is over consistent
+        # else:
+        # node is under consistent
+
+        while self.U.topKey() < self.calculate_key(start, goal) or self.rhs[start] != self.g[start]:
+            u = self.U.pop()
+            if self.g[u] > self.rhs[u]:
+                self.g[u] = self.rhs[u]
+                for s in self.neighbors8(u):
+                    self.update_vertex(s, start, goal)
+            else:
+                self.g[u] = 999999999
+                for s in self.neighbors8(u):
+                    self.update_vertex(s, start, goal)
+                self.update_vertex(u)
+
+
+
+    def reconstruct_path(self, start, goal):
+        """Function to reconstruct the path
+        Args:  start: (int, int) - start position
+               goal: (int, int) - goal position
+        Returns:  Path - the path
+        """
+
+        path = Path()
+
+        pose = Pose()
+        pose.position.x = goal[0]
+        pose.position.y = goal[1]
+        path.poses.append(pose)
+
+        u = goal
+        while u != start:
+            for s in self.neighbors8(u):
+                if self.g[s] < self.g[next]:
+                    u = s
+            pose = Pose()
+            pose.position.x = u[0]
+            pose.position.y = u[1]
+            path.poses.append(pose)
+
+        return path
+
+
+    def neighbors8(self, coord):
+        """Returns coordinates of passable neighbors of the given cell in 8-neighborhood
+        Args:  coord : (int, int) - map coordinate
+        Returns:  list (int,int) - list of neighbor coordinates
+        """
+        return [(coord[0]+1, coord[1]), (coord[0], coord[1]+1), (coord[0]-1, coord[1]), (coord[0], coord[1]-1), (coord[0]+1, coord[1]+1), (coord[0]-1, coord[1]-1), (coord[0]+1, coord[1]-1), (coord[0]-1, coord[1]+1)]
+
 
     # Support stuff
 
