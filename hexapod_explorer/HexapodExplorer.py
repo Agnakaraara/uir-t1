@@ -12,7 +12,6 @@ import cpg.oscilator_network as osc
 # import messages
 import scipy.ndimage
 
-from hexapod_explorer.gridmap import OccupancyGridMap
 from messages import *
 
 import matplotlib.pyplot as plt
