@@ -363,9 +363,9 @@ class HexapodExplorer:
         if not hasattr(self, 'rhs'):  # first run of the function
             self.rhs = np.full((grid_map.height, grid_map.width), np.inf)
             self.g = np.full((grid_map.height, grid_map.width), np.inf)
-            self.gridmap = grid_map.data.reshape(grid_map.height, grid_map.width)
+            self.gridmap = copy.deepcopy(grid_map.data.reshape(grid_map.height, grid_map.width)).transpose()
 
-        data = grid_map.data.reshape(grid_map.height, grid_map.width)
+        data = grid_map.data.reshape(grid_map.height, grid_map.width).transpose()
 
         self.initialize(goal)
 
@@ -373,9 +373,10 @@ class HexapodExplorer:
 
         for x in range(0, grid_map.width):
             for y in range(0, grid_map.height):
-                if data[y, x] != self.gridmap[y, x]:
+                if data[x, y] != self.gridmap[x, y]:
                     changed = True
-                    for s in self.neighbors8([y, x]):
+                    self.gridmap[x, y] = data[x, y]
+                    for s in self.neighbors8([x, y]):
                         self.update_vertex(s, start, goal)
 
         if changed:
@@ -386,9 +387,9 @@ class HexapodExplorer:
         self.compute_shortest_path(start, goal)
 
         if self.g[start] == np.inf:
-            return None
-
-        path = self.reconstruct_path(start, goal)
+            path = None
+        else:
+            path = self.reconstruct_path(start, goal)
 
         return path, self.rhs, self.g
 
@@ -460,6 +461,9 @@ class HexapodExplorer:
                 for s in self.neighbors8(u):
                     self.update_vertex(s, start, goal)
                 self.update_vertex(u, start, goal)
+
+            if self.U.empty():
+                return
 
     def reconstruct_path(self, start, goal):
         """Function to reconstruct the path
