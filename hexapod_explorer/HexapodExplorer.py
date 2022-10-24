@@ -202,7 +202,7 @@ class HexapodExplorer:
 
         for x in range(0, data_c.shape[1]):
             for y in range(0, data_c.shape[0]):
-                if data[y, x] < 0.5 and 10 < data_c[y, x] < 50:
+                if data[y, x] < 0.5 and 10 <= data_c[y, x] < 50:
                     data[y, x] = 1
                 else:
                     data[y, x] = 0
@@ -224,9 +224,18 @@ class HexapodExplorer:
 
         # free-edge centroids
 
-
-
         pose_list = []
+
+        for label, cells in clusters.items():
+            centroid = (0, 0)
+            for cell in cells:
+                centroid = (centroid[0] + cell[0], centroid[1] + cell[1])
+            centroid = (centroid[0] / len(cells), centroid[1] / len(cells))
+
+            pose = Pose()
+            pose.position.x = centroid[0] * grid_map.resolution
+            pose.position.y = centroid[1] * grid_map.resolution
+            pose_list.append(pose)
 
         return pose_list
 
