@@ -187,6 +187,8 @@ class HexapodExplorer:
             pose_list: Pose[] - list of selected frontiers
         """
 
+        # free-edge cell detection
+
         data = grid_map.data.reshape(grid_map.height, grid_map.width)
 
         for x in range(0, data.shape[0]):
@@ -198,17 +200,35 @@ class HexapodExplorer:
 
         data_c = ndimg.convolve(data, mask, mode='constant', cval=0.0)
 
-        free_edge_cells = []
-
         for x in range(0, data_c.shape[1]):
             for y in range(0, data_c.shape[0]):
                 if data[y, x] < 0.5 and 10 < data_c[y, x] < 50:
-                    pose = Pose()
-                    pose.position.x = x * grid_map.resolution
-                    pose.position.y = y * grid_map.resolution
-                    free_edge_cells.append(pose)
+                    data[y, x] = 1
+                else:
+                    data[y, x] = 0
 
-        return free_edge_cells
+        # free-edge clustering
+
+        labeled_image, num_labels = skimage.measure.label(data, connectivity=2, return_num=True)
+
+        clusters = {}
+
+        for label in range(1, num_labels+1):
+            clusters[label] = []
+
+        for x in range(0, labeled_image.shape[1]):
+            for y in range(0, labeled_image.shape[0]):
+                label = labeled_image[y, x]
+                if label != 0:
+                    clusters[label].append((x, y))
+
+        # free-edge centroids
+
+
+
+        pose_list = []
+
+        return pose_list
 
     def find_inf_frontiers(self, grid_map):
         """Method to find the frontiers based on information theory approach
