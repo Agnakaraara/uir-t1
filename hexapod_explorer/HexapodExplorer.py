@@ -187,8 +187,28 @@ class HexapodExplorer:
             pose_list: Pose[] - list of selected frontiers
         """
 
-        # TODO:[t1e_expl] find free-adges and cluster the frontiers
-        return None
+        data = grid_map.data.reshape(grid_map.height, grid_map.width)
+
+        for x in range(0, data.shape[0]):
+            for y in range(0, data.shape[1]):
+                if data[x, y] == 0.5:
+                    data[x, y] = 10
+
+        mask = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]])
+
+        data_c = ndimg.convolve(data, mask, mode='constant', cval=0.0)
+
+        free_edge_cells = []
+
+        for x in range(0, data_c.shape[1]):
+            for y in range(0, data_c.shape[0]):
+                if data[y, x] < 0.5 and 10 < data_c[y, x] < 50:
+                    pose = Pose()
+                    pose.position.x = x * grid_map.resolution
+                    pose.position.y = y * grid_map.resolution
+                    free_edge_cells.append(pose)
+
+        return free_edge_cells
 
     def find_inf_frontiers(self, grid_map):
         """Method to find the frontiers based on information theory approach
