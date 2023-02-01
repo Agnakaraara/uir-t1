@@ -411,10 +411,9 @@ class HexapodExplorer:
             self.rhs = np.full((grid_map.height, grid_map.width), np.inf)
             self.g = np.full((grid_map.height, grid_map.width), np.inf)
             self.gridmap = copy.deepcopy(grid_map.data.reshape(grid_map.height, grid_map.width)).transpose()
+            self.initialize(goal)
 
         data = grid_map.data.reshape(grid_map.height, grid_map.width).transpose()
-
-        self.initialize(goal)
 
         changed = False
 
