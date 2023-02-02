@@ -223,8 +223,8 @@ class HexapodExplorer:
             centroid = (centroid[0] / len(cells), centroid[1] / len(cells))
 
             pose = Pose()
-            pose.position.x = centroid[0] * grid_map.resolution
-            pose.position.y = centroid[1] * grid_map.resolution
+            pose.position.x = centroid[0] * grid_map.resolution + grid_map.origin.position.x
+            pose.position.y = centroid[1] * grid_map.resolution + grid_map.origin.position.y
             pose_list.append(pose)
 
         return pose_list
