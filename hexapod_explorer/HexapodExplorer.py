@@ -8,9 +8,11 @@ import heapq
 import scipy.ndimage
 import scipy.ndimage as ndimg
 import skimage.measure
+from sklearn.cluster import KMeans
 
 from hexapod_explorer.a_star import a_star
 from hexapod_explorer.gridmap import OccupancyGridMap
+from hexapod_robot.HexapodRobotConst import LASER_SCAN_RANGE
 from messages import *
 
 
@@ -132,6 +134,12 @@ class HexapodExplorer:
     def world_to_map(self, p, grid_origin, grid_resolution):
         return ((p - grid_origin) / grid_resolution).astype(int)
 
+    def cellToPose(self, cell: tuple, gridMap: OccupancyGrid) -> Pose:
+        pose = Pose()
+        pose.position.x = cell[0] * gridMap.resolution + gridMap.origin.position.x
+        pose.position.y = cell[1] * gridMap.resolution + gridMap.origin.position.y
+        return pose
+
     def update_free(self, P_mi):
         """method to calculate the Bayesian update of the free cell with the current occupancy probability value P_mi
         Args:
@@ -217,15 +225,23 @@ class HexapodExplorer:
         pose_list = []
 
         for label, cells in clusters.items():
-            centroid = (0, 0)
-            for cell in cells:
-                centroid = (centroid[0] + cell[0], centroid[1] + cell[1])
-            centroid = (centroid[0] / len(cells), centroid[1] / len(cells))
+            f = len(cells)
+            D = LASER_SCAN_RANGE / grid_map.resolution
+            n_r = int(1 + np.floor(f/D + 0.5))
+            kmeans = KMeans(n_clusters=n_r, random_state=0, n_init="auto").fit(cells)
+            for centroid in kmeans.cluster_centers_:
+                pose_list.append(self.cellToPose(centroid, grid_map))
 
-            pose = Pose()
-            pose.position.x = centroid[0] * grid_map.resolution + grid_map.origin.position.x
-            pose.position.y = centroid[1] * grid_map.resolution + grid_map.origin.position.y
-            pose_list.append(pose)
+            # t1e
+            #centroid = (0, 0)
+            #for cell in cells:
+            #    centroid = (centroid[0] + cell[0], centroid[1] + cell[1])
+            #centroid = (centroid[0] / len(cells), centroid[1] / len(cells))
+
+            #pose = Pose()
+            #pose.position.x = centroid[0] * grid_map.resolution + grid_map.origin.position.x
+            #pose.position.y = centroid[1] * grid_map.resolution + grid_map.origin.position.y
+            #pose_list.append(pose)
 
         return pose_list
 
