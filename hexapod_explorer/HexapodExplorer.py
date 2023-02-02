@@ -12,7 +12,7 @@ from sklearn.cluster import KMeans
 
 from hexapod_explorer.a_star import a_star
 from hexapod_explorer.gridmap import OccupancyGridMap
-from hexapod_robot.HexapodRobotConst import LASER_SCAN_RANGE
+from hexapod_robot.HexapodRobotConst import LASER_SCAN_RANGE_MAX, LASER_SCAN_RANGE_MIN
 from messages import *
 
 
@@ -131,15 +131,6 @@ class HexapodExplorer:
 
         return grid_map_update
 
-    def world_to_map(self, p, grid_origin, grid_resolution):
-        return ((p - grid_origin) / grid_resolution).astype(int)
-
-    def cellToPose(self, cell: tuple, gridMap: OccupancyGrid) -> Pose:
-        pose = Pose()
-        pose.position.x = cell[0] * gridMap.resolution + gridMap.origin.position.x
-        pose.position.y = cell[1] * gridMap.resolution + gridMap.origin.position.y
-        return pose
-
     def update_free(self, P_mi):
         """method to calculate the Bayesian update of the free cell with the current occupancy probability value P_mi
         Args:
@@ -226,7 +217,7 @@ class HexapodExplorer:
 
         for label, cells in clusters.items():
             f = len(cells)
-            D = LASER_SCAN_RANGE / grid_map.resolution
+            D = LASER_SCAN_RANGE_MAX / grid_map.resolution
             n_r = int(1 + np.floor(f/D + 0.5))
             kmeans = KMeans(n_clusters=n_r, random_state=0, n_init="auto").fit(cells)
             for centroid in kmeans.cluster_centers_:
@@ -245,17 +236,35 @@ class HexapodExplorer:
 
         return pose_list
 
-    def find_inf_frontiers(self, grid_map):
-        """Method to find the frontiers based on information theory approach
-        Args:
-            grid_map: OccupancyGrid - gridmap of the environment
-        Returns:
-            pose_list: Pose[] - list of selected frontiers
-        """
+    def find_inf_frontiers(self, grid_map: OccupancyGrid) -> [(Pose, float)]:  # project F3
+        """Method to find the frontiers based on information theory approach"""
+
+        frontiersWeighted = []
+
+        H = grid_map.data.copy()
+        for x in range(len(H)):
+            p = H[x]
+            H[x] = 0 if p == 0 or p == 1 else -p * np.log(p) - (1-p) * np.log(1-p)
+        H = H.reshape((grid_map.height, grid_map.width))
 
         frontiers = self.find_free_edge_frontiers(grid_map)
 
-        return frontiers
+        range_max = LASER_SCAN_RANGE_MAX / grid_map.resolution
+        range_min = LASER_SCAN_RANGE_MIN / grid_map.resolution
+
+        for frontier in frontiers:
+            frontier_cell = self.poseToCell(frontier, grid_map)
+            I_action = 0.0
+            for y in range(grid_map.height):
+                for x in range(grid_map.width):
+                    dist = self.distanceOfCells((x, y), frontier_cell)
+                    if range_min <= dist <= range_max and self.cellsSeeEachOther((x, y), frontier_cell, grid_map):
+                        I_action += H[y, x]
+            frontiersWeighted.append((frontier, I_action))
+
+        frontiersWeighted.sort(key=lambda wf: wf[1])
+
+        return map(lambda wf: wf[0], frontiersWeighted)
 
     def grow_obstacles(self, grid_map, robot_size):
         """ Method to grow the obstacles to take into account the robot embodiment
@@ -600,3 +609,25 @@ class HexapodExplorer:
         x = goal[0]
         y = goal[1]
         return line
+
+    def world_to_map(self, p, grid_origin, grid_resolution):
+        return ((p - grid_origin) / grid_resolution).astype(int)
+
+    def poseToCell(self, pose: Pose, gridMap: OccupancyGrid) -> tuple:
+        return (pose.position.x - gridMap.origin.position.x) / gridMap.resolution, (pose.position.y - gridMap.origin.position.y) / gridMap.resolution
+
+    def cellToPose(self, cell: tuple, gridMap: OccupancyGrid) -> Pose:
+        pose = Pose()
+        pose.position.x = cell[0] * gridMap.resolution + gridMap.origin.position.x
+        pose.position.y = cell[1] * gridMap.resolution + gridMap.origin.position.y
+        return pose
+
+    def distanceOfCells(self, cell1: tuple, cell2: tuple):
+        return np.sqrt((cell1[0]-cell2[0])**2 + (cell1[1]-cell2[1])**2)
+
+    def cellsSeeEachOther(self, cell1: tuple, cell2: tuple, gridMap: OccupancyGrid) -> bool:
+        line = self.bresenham_line(cell1, cell2)
+        for point in line:
+            if gridMap.data[point[1]*gridMap.width + point[0]] == 1:
+                return False
+        return True
