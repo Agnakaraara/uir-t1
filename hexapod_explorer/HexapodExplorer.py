@@ -305,17 +305,18 @@ class HexapodExplorer:
     # P3
 
     def pick_frontier_tsp(self, frontiers: [Pose], odometry: Odometry) -> Pose:
+        if len(frontiers) == 1:
+            return frontiers[0]
         points = [odometry.pose] + frontiers
         n = len(points)
         distance_matrix = np.zeros((n, n))
-        for a in range(n):
-            for b in range(n):
+        for a in range(n):         # from
+            for b in range(1, n):     # to, because it's open-ended we keep first one zero
                 f1 = points[a]
                 f2 = points[b]
                 distance_matrix[a][b] = f1.dist(f2)
         sequence = solve_TSP(distance_matrix)
-        print(sequence)
-        pass
+        return frontiers[sequence[1]-1]
 
     # t1d - Plan path, A-star
 
