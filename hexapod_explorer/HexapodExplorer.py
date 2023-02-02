@@ -68,6 +68,8 @@ class HexapodExplorer:
     def __init__(self):
         pass
 
+    # t1c - Map
+
     def fuse_laser_scan(self, grid_map, laser_scan, odometry):
         """ Method to fuse the laser scan data sampled by the robot with a given 
             odometry into the probabilistic occupancy grid map
@@ -168,7 +170,11 @@ class HexapodExplorer:
 
         return min(p_mi, 0.95)  # never let p_mi get to 1
 
-    def find_free_edge_frontiers(self, grid_map):
+    # t1e - Frontiers
+
+    # F1 + F2
+
+    def find_free_edge_frontiers(self, grid_map: OccupancyGrid):
         """Method to find the free-edge frontiers (edge clusters between the free and unknown areas)
         Args:
             grid_map: OccupancyGrid - gridmap of the environment
@@ -236,6 +242,8 @@ class HexapodExplorer:
 
         return pose_list
 
+    # F3
+
     def find_inf_frontiers(self, grid_map: OccupancyGrid) -> [(Pose, float)]:  # project F3
         """Method to find the frontiers based on information theory approach"""
 
@@ -266,6 +274,25 @@ class HexapodExplorer:
 
         # return frontiersWeighted   # todo: return list of Poses OR list of (Pose, float)
         return map(lambda wf: wf[0], frontiersWeighted)
+
+    # Project - Pick frontier
+
+    # P1
+
+    def pick_frontier_closest(self, frontiers: [Pose]) -> Pose:
+        pass
+
+    # P2
+
+    def pick_frontier_inf(self, frontiers: [Pose, float]) -> Pose:
+        pass
+
+    # P3
+
+    def pick_frontier_tsp(self, frontiers: [Pose]) -> Pose:
+        pass
+
+    # t1d - Plan path, A-star
 
     def grow_obstacles(self, grid_map, robot_size):
         """ Method to grow the obstacles to take into account the robot embodiment
@@ -408,6 +435,8 @@ class HexapodExplorer:
     # INCREMENTAL Planner
     ###########################################################################
 
+    # t1x - D-star
+
     def plan_path_incremental(self, grid_map, start, goal):
         """ Method to plan the path from start to the goal pose on the grid
         Args:
@@ -455,8 +484,6 @@ class HexapodExplorer:
             path = self.reconstruct_path(start, goal)
 
         return path, self.rhs, self.g
-
-    # D-Star
 
     gridmap = None
     U: PriorityQueue = None
