@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
+import matplotlib
 import matplotlib.pyplot as plt
 
 import sys
@@ -22,6 +22,7 @@ from messages import *
 SIMPLE_VARIANT = True
 
 if __name__=="__main__":
+    matplotlib.use('TkAgg')
 
     robot = hexapod.HexapodRobot(0)
     explor = explorer.HexapodExplorer()
