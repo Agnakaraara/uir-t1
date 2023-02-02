@@ -30,7 +30,7 @@ import numpy as np
 
 # Change these directories based on where you have 
 # a compiled executable of the LKH TSP Solver
-lkh_dir = 'LKH-2.0.9'  # relative path
+lkh_dir = 'lkh/LKH-2.0.9'  # relative path
 tsplib_dir = '/tmp/LKH_files/'  # absolute path
 lkh_cmd = 'LKH'  # name of the program
 pwd = os.path.dirname(os.path.abspath(__file__))
