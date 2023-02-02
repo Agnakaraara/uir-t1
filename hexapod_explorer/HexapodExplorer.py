@@ -255,8 +255,8 @@ class HexapodExplorer:
         for frontier in frontiers:
             frontier_cell = self.poseToCell(frontier, grid_map)
             I_action = 0.0
-            for y in range(max(int(frontier_cell[1]-range_max), 0), min(int(frontier_cell[1]+range_max), grid_map.height)):
-                for x in range(max(int(frontier_cell[0]-range_max), 0), min(int(frontier_cell[0]+range_max), grid_map.width)):
+            for y in range(max(int(frontier_cell[1]-range_max), 0), min(int(frontier_cell[1]+range_max+1), grid_map.height)):
+                for x in range(max(int(frontier_cell[0]-range_max), 0), min(int(frontier_cell[0]+range_max+1), grid_map.width)):
                     dist = self.distanceOfCells((x, y), frontier_cell)
                     if range_min <= dist <= range_max and self.cellsSeeEachOther((x, y), frontier_cell, grid_map):
                         I_action += H[y, x]
@@ -627,8 +627,9 @@ class HexapodExplorer:
         return np.sqrt((cell1[0]-cell2[0])**2 + (cell1[1]-cell2[1])**2)
 
     def cellsSeeEachOther(self, cell1: tuple, cell2: tuple, gridMap: OccupancyGrid) -> bool:
-        line = self.bresenham_line(cell1, cell2)
+        n = int(self.distanceOfCells(cell1, cell2))
+        line = zip(np.linspace(cell1[0], cell2[0], n), np.linspace(cell1[1], cell2[1], n))
         for point in line:
-            if gridMap.data[point[1]*gridMap.width + point[0]] == 1:
+            if gridMap.data[int(point[1])*gridMap.width + int(point[0])] == 1:
                 return False
         return True
