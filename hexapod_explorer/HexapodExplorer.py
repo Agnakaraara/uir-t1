@@ -279,8 +279,15 @@ class HexapodExplorer:
 
     # P1
 
-    def pick_frontier_closest(self, frontiers: [Pose]) -> Pose:
-        pass
+    def pick_frontier_closest(self, frontiers: [Pose], odometry: Odometry) -> Pose:
+        closest = None
+        minDist = np.inf
+        for frontier in frontiers:
+            dist = frontier.dist(odometry.pose)
+            if dist < minDist:
+                minDist = dist
+                closest = frontier
+        return closest
 
     # P2
 
