@@ -13,6 +13,7 @@ from sklearn.cluster import KMeans
 from hexapod_explorer.a_star import a_star
 from hexapod_explorer.gridmap import OccupancyGridMap
 from hexapod_robot.HexapodRobotConst import LASER_SCAN_RANGE_MAX, LASER_SCAN_RANGE_MIN
+from lkh.invoke_LKH import solve_TSP
 from messages import *
 
 
@@ -272,8 +273,7 @@ class HexapodExplorer:
 
         frontiersWeighted.sort(key=lambda wf: -wf[1])
 
-        # return frontiersWeighted   # todo: return list of Poses OR list of (Pose, float)
-        return map(lambda wf: wf[0], frontiersWeighted)
+        return frontiersWeighted
 
     # Project - Pick frontier
 
@@ -293,18 +293,28 @@ class HexapodExplorer:
 
     def pick_frontier_inf(self, frontiers: [Pose, float], odometry: Odometry) -> Pose:
         best_frontiers = []
-        maxUtility = np.inf
+        maxUtility = -np.inf
         for frontier, utility in frontiers:     # utility = mutual information computed in F3
             if utility > maxUtility:
                 maxUtility = utility
                 best_frontiers = [frontier]
             elif utility == maxUtility:
                 best_frontiers.append(frontier)
-        return self.pick_frontier_closest(frontiers, odometry)
+        return self.pick_frontier_closest(best_frontiers, odometry)
 
     # P3
 
-    def pick_frontier_tsp(self, frontiers: [Pose]) -> Pose:
+    def pick_frontier_tsp(self, frontiers: [Pose], odometry: Odometry) -> Pose:
+        points = [odometry.pose] + frontiers
+        n = len(points)
+        distance_matrix = np.zeros((n, n))
+        for a in range(n):
+            for b in range(n):
+                f1 = points[a]
+                f2 = points[b]
+                distance_matrix[a][b] = f1.dist(f2)
+        sequence = solve_TSP(distance_matrix)
+        print(sequence)
         pass
 
     # t1d - Plan path, A-star
