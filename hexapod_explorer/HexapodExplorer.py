@@ -291,8 +291,16 @@ class HexapodExplorer:
 
     # P2
 
-    def pick_frontier_inf(self, frontiers: [Pose, float]) -> Pose:
-        pass
+    def pick_frontier_inf(self, frontiers: [Pose, float], odometry: Odometry) -> Pose:
+        best_frontiers = []
+        maxUtility = np.inf
+        for frontier, utility in frontiers:     # utility = mutual information computed in F3
+            if utility > maxUtility:
+                maxUtility = utility
+                best_frontiers = [frontier]
+            elif utility == maxUtility:
+                best_frontiers.append(frontier)
+        return self.pick_frontier_closest(frontiers, odometry)
 
     # P3
 
