@@ -5,11 +5,12 @@ import sys
 
 import matplotlib.pyplot as plt
 
+from hexapod_explorer.HexapodExplorer import HexapodExplorer
+
 sys.path.append('hexapod_robot')
 sys.path.append('hexapod_explorer')
  
 #import hexapod robot and explorer
-import HexapodExplorer as explorer
 
 #import communication messages
 
@@ -21,13 +22,13 @@ SIMPLE_VARIANT = True
 
 if __name__=="__main__":
 
-    explor = explorer.HexapodExplorer()
+    explor = HexapodExplorer()
 
     dataset = pickle.load( open( "resources/frontier_detection.bag", "rb" ) )
 
     for gridmap in dataset:
             #find free edges
-            points = explor.find_free_edge_frontiers(gridmap)
+            points = explor.find_inf_frontiers(gridmap)
 
             #plot the map
             fig, ax = plt.subplots()

@@ -253,8 +253,9 @@ class HexapodExplorer:
             pose_list: Pose[] - list of selected frontiers
         """
 
-        # TODO:[t1e_expl] find the information rich points in the environment
-        return None
+        frontiers = self.find_free_edge_frontiers(grid_map)
+
+        return frontiers
 
     def grow_obstacles(self, grid_map, robot_size):
         """ Method to grow the obstacles to take into account the robot embodiment
