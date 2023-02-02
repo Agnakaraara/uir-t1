@@ -262,8 +262,9 @@ class HexapodExplorer:
                         I_action += H[y, x]
             frontiersWeighted.append((frontier, I_action))
 
-        frontiersWeighted.sort(key=lambda wf: wf[1])
+        frontiersWeighted.sort(key=lambda wf: -wf[1])
 
+        # return frontiersWeighted   # todo: return list of Poses OR list of (Pose, float)
         return map(lambda wf: wf[0], frontiersWeighted)
 
     def grow_obstacles(self, grid_map, robot_size):
