@@ -1,32 +1,20 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import math
-import time
-import numpy as np
 import copy
-
-# cpg network
-import cpg.oscilator_network as osc
+import heapq
 
 # import messages
 import scipy.ndimage
+import scipy.ndimage as ndimg
+import skimage.measure
 
 from hexapod_explorer.a_star import a_star
 from hexapod_explorer.gridmap import OccupancyGridMap
 from messages import *
 
-import matplotlib.pyplot as plt
 
-import scipy.ndimage as ndimg
-from sklearn.cluster import KMeans
-
-import skimage.measure
-
-import collections
-import heapq
-
-import heapq
+# cpg network
 
 
 class PriorityQueue:
