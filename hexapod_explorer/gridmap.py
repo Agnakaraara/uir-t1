@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 import numpy
-import numpy as np
 
 
 class OccupancyGridMap:
@@ -27,9 +26,6 @@ class OccupancyGridMap:
         :param point_idx: a point (x, y) in data array
         """
         x_index, y_index = point_idx
-        if x_index < 0 or y_index < 0 or x_index >= self.dim_cells[0] or y_index >= self.dim_cells[1]:
-            raise Exception('Point is outside map boundary')
-
         self.visited[y_index][x_index] = 1.0
 
     def mark_visited(self, point):
@@ -49,9 +45,6 @@ class OccupancyGridMap:
         :return: True if the given point is visited, false otherwise
         """
         x_index, y_index = point_idx
-        if x_index < 0 or y_index < 0 or x_index >= self.dim_cells[0] or y_index >= self.dim_cells[1]:
-            raise Exception('Point is outside map boundary')
-
         if self.visited[y_index][x_index] == 1.0:
             return True
         else:
@@ -75,9 +68,6 @@ class OccupancyGridMap:
         :return: the occupancy value of the given point
         """
         x_index, y_index = point_idx
-        if x_index < 0 or y_index < 0 or x_index >= self.dim_cells[1] or y_index >= self.dim_cells[0]:
-            raise Exception('Point is outside map boundary')
-
         return self.data[y_index][x_index]
 
     def get_data(self, point):
@@ -98,9 +88,6 @@ class OccupancyGridMap:
         :param new_value: the new occupancy values
         """
         x_index, y_index = point_idx
-        if x_index < 0 or y_index < 0 or x_index >= self.dim_cells[0] or y_index >= self.dim_cells[1]:
-            raise Exception('Point is outside map boundary')
-
         self.data[y_index][x_index] = new_value
 
     def set_data(self, point, new_value):
@@ -121,7 +108,7 @@ class OccupancyGridMap:
         :return: True if the given point is inside the map, false otherwise
         """
         x_index, y_index = point_idx
-        if x_index < 0 or y_index < 0 or x_index >= self.dim_cells[0] or y_index >= self.dim_cells[1]:
+        if x_index < 0 or y_index < 0 or x_index >= self.dim_cells[1] or y_index >= self.dim_cells[0]:
             return False
         else:
             return True
