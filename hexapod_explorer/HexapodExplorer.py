@@ -367,10 +367,10 @@ class HexapodExplorer:
 
         return grid_map_grow
 
-    def plan_path(self, grid_map, start, goal):
+    def plan_path(self, gridMapP: OccupancyGrid, start: Pose, goal: Pose):
         """ Method to plan the path from start to the goal pose on the grid
         Args:
-            grid_map: OccupancyGrid - gridmap for obstacle growing
+            gridMapP: OccupancyGrid - gridmap for obstacle growing
             start: Pose - robot start pose
             goal: Pose - robot goal pose
         Returns:
@@ -383,9 +383,9 @@ class HexapodExplorer:
 
         # TODO:[t1d-plan] plan the path between the start and the goal Pose
 
-        data = grid_map.data.reshape(grid_map.height, grid_map.width)
+        data = gridMapP.data.reshape(gridMapP.height, gridMapP.width)
 
-        gmap = OccupancyGridMap(data, grid_map.resolution)
+        gmap = OccupancyGridMap(data, gridMapP.resolution)
 
         try:
             result = a_star((start.position.x, start.position.y), (goal.position.x, goal.position.y), gmap)
@@ -403,18 +403,18 @@ class HexapodExplorer:
 
         return path
 
-    def simplify_path(self, grid_map, path):
+    def simplify_path(self, gridMapP, path: Path) -> Path:
         """ Method to simplify the found path on the grid
         Args:
-            grid_map: OccupancyGrid - gridmap for obstacle growing
+            gridMapP: OccupancyGrid - gridmap for obstacle growing
             path: Path - path to be simplified
         Returns:
             path_simple: Path - simplified path
         """
-        if grid_map == None or path == None:
+        if gridMapP is None or path is None:
             return None
 
-        grid_origin = np.array([grid_map.origin.position.x, grid_map.origin.position.y])
+        grid_origin = np.array([gridMapP.origin.position.x, gridMapP.origin.position.y])
 
         path_simplified = Path()
         # add the start pose
@@ -422,7 +422,7 @@ class HexapodExplorer:
 
         # TODO:[t1d-plan] simplifie the planned path
 
-        data = grid_map.data.reshape(grid_map.height, grid_map.width)
+        data = gridMapP.data.reshape(gridMapP.height, gridMapP.width)
 
         i = 1
 
@@ -432,9 +432,9 @@ class HexapodExplorer:
             previous_pose = path_simplified.poses[-1]
             for pose in path.poses[i:]:
                 end = path_simplified.poses[-1]
-                end = self.world_to_map(np.array([end.position.x, end.position.y]), grid_origin, grid_map.resolution)
+                end = self.world_to_map(np.array([end.position.x, end.position.y]), grid_origin, gridMapP.resolution)
                 pose_point = self.world_to_map(np.array([pose.position.x, pose.position.y]), grid_origin,
-                                               grid_map.resolution)
+                                               gridMapP.resolution)
                 line = self.bresenham_line(end, pose_point)
                 collide = False
                 for point in line:
