@@ -104,11 +104,11 @@ class HexapodExplorer:
             data = grid_map.data.reshape(grid_map_update.height, grid_map_update.width)
 
         for x, y in laser_scan_cells:
-            new_width = max(grid_map.width if data is not None else 0, x) - min(0, x) + 1
-            new_height = max(grid_map.height if data is not None else 0, y) - min(0, y) + 1
+            new_width = max(grid_map.width if data is not None else 0, x + 1) - min(0, x)
+            new_height = max(grid_map.height if data is not None else 0, y + 1) - min(0, y)
             if new_width != grid_map.width or new_height != grid_map.height:
                 print("Map Resized")
-                new_origin = np.array([min(0, x), min(0, y)]) * grid_map.resolution
+                new_origin = grid_origin + np.array([min(0, x), min(0, y)]) * grid_map.resolution
                 x_shift = int((new_origin[0] - grid_origin[0]) / grid_map.resolution)
                 y_shift = int((new_origin[1] - grid_origin[1]) / grid_map.resolution)
                 new_data = 0.5 * np.ones((new_height, new_width))
