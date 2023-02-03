@@ -6,7 +6,6 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 from hexapod_explorer.HexapodExplorer import HexapodExplorer
-from hexapod_robot.HexapodRobot import HexapodRobot
 
 sys.path.append('hexapod_robot')
 sys.path.append('hexapod_explorer')
@@ -19,20 +18,7 @@ SIMPLE_VARIANT = True
 if __name__ == "__main__":
     matplotlib.use('TkAgg')
 
-    robot = HexapodRobot(0)
     explor = HexapodExplorer()
-
-    # turn on the robot
-    robot.turn_on()
-
-    # start navigation thread
-    robot.start_navigation()
-
-    # assign goal for navigation
-    goals = [
-        Pose(Vector3(3.5, 3.5, 0), Quaternion(1, 0, 0, 0)),
-        Pose(Vector3(0.0, 0.0, 0), Quaternion(1, 0, 0, 0)),
-    ]
 
     # prepare the online plot
     plt.ion()
