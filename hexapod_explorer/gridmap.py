@@ -1,5 +1,6 @@
-import numpy
 import matplotlib.pyplot as plt
+import numpy
+import numpy as np
 
 
 class OccupancyGridMap:
@@ -74,7 +75,7 @@ class OccupancyGridMap:
         :return: the occupancy value of the given point
         """
         x_index, y_index = point_idx
-        if x_index < 0 or y_index < 0 or x_index >= self.dim_cells[0] or y_index >= self.dim_cells[1]:
+        if x_index < 0 or y_index < 0 or x_index >= self.dim_cells[1] or y_index >= self.dim_cells[0]:
             raise Exception('Point is outside map boundary')
 
         return self.data[y_index][x_index]

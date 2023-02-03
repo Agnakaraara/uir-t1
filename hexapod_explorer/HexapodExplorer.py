@@ -175,7 +175,7 @@ class HexapodExplorer:
 
     # F1 + F2
 
-    def find_free_edge_frontiers(self, grid_map: OccupancyGrid) -> [Pose]:
+    def find_free_edge_frontiers(self, grid_map: OccupancyGrid, gridMapP: OccupancyGrid) -> [Pose]:
         """Method to find the free-edge frontiers (edge clusters between the free and unknown areas)
         Args:
             grid_map: OccupancyGrid - gridmap of the environment
@@ -186,6 +186,7 @@ class HexapodExplorer:
         # free-edge cell detection
 
         data = grid_map.data.copy().reshape(grid_map.height, grid_map.width)
+        dataP = gridMapP.data.reshape(grid_map.height, grid_map.width)
 
         for x in range(0, data.shape[0]):
             for y in range(0, data.shape[1]):
@@ -198,7 +199,7 @@ class HexapodExplorer:
 
         for x in range(0, data_c.shape[1]):
             for y in range(0, data_c.shape[0]):
-                if data[y, x] < 0.5 and 10 <= data_c[y, x] < 50:
+                if data[y, x] < 0.5 and 10 <= data_c[y, x] < 50 and dataP[y, x] == 0:    # cell is free-edge
                     data[y, x] = 1
                 else:
                     data[y, x] = 0
@@ -681,6 +682,9 @@ class HexapodExplorer:
 
     def distanceOfPosesAStar(self, pose1: Pose, pose2: Pose, gridMapP: OccupancyGrid) -> float:
         path = self.plan_path(gridMapP, pose1, pose2)
+        if path is None:
+            print("pose unreachable")
+            return 1000
         return len(path.poses)      # uses non-simplified path so we only need to count number of cells
 
     def cellsSeeEachOther(self, cell1: tuple, cell2: tuple, gridMap: OccupancyGrid) -> bool:
