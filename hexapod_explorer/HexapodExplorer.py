@@ -343,7 +343,7 @@ class HexapodExplorer:
                 if p > 0.5:
                     ranges[y, x] = 0
                 elif p == 0.5:
-                    ranges[y, x] = 0
+                    ranges[y, x] = 1    # Set to 1 so unknown places will not grow as they are not obstacles
                 else:
                     ranges[y, x] = 1
 
