@@ -266,7 +266,7 @@ class HexapodExplorer:
             I_action = 0.0
             for y in range(max(int(frontier_cell[1]-range_max), 0), min(int(frontier_cell[1]+range_max+1), grid_map.height)):
                 for x in range(max(int(frontier_cell[0]-range_max), 0), min(int(frontier_cell[0]+range_max+1), grid_map.width)):
-                    dist = self.distanceOfCells((x, y), frontier_cell)
+                    dist = self.distanceOfCellsEuclidean((x, y), frontier_cell)
                     if range_min <= dist <= range_max and self.cellsSeeEachOther((x, y), frontier_cell, grid_map):
                         I_action += H[y, x]
             frontiersWeighted.append((frontier, I_action))
@@ -279,11 +279,11 @@ class HexapodExplorer:
 
     # P1
 
-    def pick_frontier_closest(self, frontiers: [Pose], odometry: Odometry) -> Pose:
+    def pick_frontier_closest(self, frontiers: [Pose], gridMapP: OccupancyGrid, odometry: Odometry) -> Pose:
         closest = None
         minDist = np.inf
         for frontier in frontiers:
-            dist = frontier.dist(odometry.pose)
+            dist = self.distanceOfPosesAStar(frontier, odometry.pose, gridMapP)
             if dist < minDist:
                 minDist = dist
                 closest = frontier
@@ -291,7 +291,7 @@ class HexapodExplorer:
 
     # P2
 
-    def pick_frontier_inf(self, frontiers: [Pose, float], odometry: Odometry) -> Pose:
+    def pick_frontier_inf(self, frontiers: [Pose, float], gridMapP: OccupancyGrid, odometry: Odometry) -> Pose:
         best_frontiers = []
         maxUtility = -np.inf
         for frontier, utility in frontiers:     # utility = mutual information computed in F3
@@ -300,11 +300,11 @@ class HexapodExplorer:
                 best_frontiers = [frontier]
             elif utility == maxUtility:
                 best_frontiers.append(frontier)
-        return self.pick_frontier_closest(best_frontiers, odometry)
+        return self.pick_frontier_closest(best_frontiers, gridMapP, odometry)
 
     # P3
 
-    def pick_frontier_tsp(self, frontiers: [Pose], odometry: Odometry) -> Pose:
+    def pick_frontier_tsp(self, frontiers: [Pose], gridMapP: OccupancyGrid, odometry: Odometry) -> Pose:
         if len(frontiers) == 1:
             return frontiers[0]
         points = [odometry.pose] + frontiers
@@ -314,7 +314,7 @@ class HexapodExplorer:
             for b in range(1, n):     # to, because it's open-ended we keep first one zero
                 f1 = points[a]
                 f2 = points[b]
-                distance_matrix[a][b] = f1.dist(f2)
+                distance_matrix[a][b] = self.distanceOfPosesAStar(f1, f2, gridMapP)
         sequence = solve_TSP(distance_matrix)
         return frontiers[sequence[1]-1]
 
@@ -676,11 +676,15 @@ class HexapodExplorer:
         pose.position.y = cell[1] * gridMap.resolution + gridMap.origin.position.y
         return pose
 
-    def distanceOfCells(self, cell1: tuple, cell2: tuple):
+    def distanceOfCellsEuclidean(self, cell1: tuple, cell2: tuple) -> float:
         return np.sqrt((cell1[0]-cell2[0])**2 + (cell1[1]-cell2[1])**2)
 
+    def distanceOfPosesAStar(self, pose1: Pose, pose2: Pose, gridMapP: OccupancyGrid) -> float:
+        path = self.plan_path(gridMapP, pose1, pose2)
+        return len(path.poses)      # uses non-simplified path so we only need to count number of cells
+
     def cellsSeeEachOther(self, cell1: tuple, cell2: tuple, gridMap: OccupancyGrid) -> bool:
-        n = int(self.distanceOfCells(cell1, cell2))
+        n = int(self.distanceOfCellsEuclidean(cell1, cell2))
         line = zip(np.linspace(cell1[0], cell2[0], n), np.linspace(cell1[1], cell2[1], n))
         for point in line:
             if gridMap.data[int(point[1])*gridMap.width + int(point[0])] == 1:
