@@ -87,6 +87,7 @@ class HexapodExplorer:
         robot_position = np.array([odometry.pose.position.x, odometry.pose.position.y])  # just x,y
         robot_rotation_matrix = odometry.pose.orientation.to_R()[0:2, 0:2]
         grid_origin = np.array([grid_map.origin.position.x, grid_map.origin.position.y])
+        robot_position_cell = self.world_to_map(robot_position, grid_origin, grid_map.resolution)
 
         for i in range(0, len(P)):
             if P[i] < laser_scan.range_min: P[i] = laser_scan.range_min
@@ -95,19 +96,15 @@ class HexapodExplorer:
             P[i] = np.array([math.cos(angle) * P[i], math.sin(angle) * P[i]])
             P[i] = robot_rotation_matrix @ np.transpose(P[i]) + robot_position
             P[i] = self.world_to_map(P[i], grid_origin, grid_map.resolution)
-            P[i][0] = max(0, min(grid_map.width - 1, P[i][0]))
-            P[i][1] = max(0, min(grid_map.height - 1, P[i][1]))
 
-        odom_map = self.world_to_map(robot_position, grid_origin, grid_map.resolution)
-        laser_scan_points_map = P
+        laser_scan_cells = P
 
         free_points = []
         occupied_points = []
 
-        for pt in laser_scan_points_map:
-            pts = self.bresenham_line(odom_map, pt)
-            free_points.extend(pts)
-            occupied_points.append(pt)
+        for scan_cell in laser_scan_cells:
+            free_points.extend(self.bresenham_line(robot_position_cell, scan_cell))    # points on line are free
+            occupied_points.append(scan_cell)                                          # point at the end is occupied
 
         # Bayesian update
 
