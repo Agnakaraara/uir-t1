@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import sys
-import hexapod_sim.vrep_api.vrep as vrep
-import math
-import time
-import numpy as np
 
-#messages
+# messages
+from hexapod_robot.hexapod_sim.vrep_api import vrep
 from messages import *
+
 
 class HexapodHAL:
     #class for interfacing the hexapod robot in V-REP simulator

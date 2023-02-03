@@ -1,34 +1,26 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
-import math
-import time
-import numpy as np
+import sys
 import threading as thread
 
-#hexapod robot 
-import hexapod_sim.HexapodHAL as hexapodhal
-
-#cpg network
-import cpg.oscilator_network as osc
-
-#import robot parameters
-from HexapodRobotConst import *
-
-#import controller
-import HexapodController as cntrl
-
-#import messages
+from hexapod_robot.HexapodController import HexapodController
+from hexapod_robot.HexapodRobotConst import *
+from hexapod_robot.cpg.oscilator_constants import TRIPOD_GAIT_WEIGHTS
+from hexapod_robot.cpg.oscilator_network import OscilatorNetwork
+from hexapod_robot.hexapod_sim.HexapodHAL import HexapodHAL
 from messages import *
+
+
+# hexapod robot
 
 class HexapodRobot:
     def __init__(self, robot_id):
         """Hexapod controller class constructor
         """
         #robotHAL instance
-        self.robot = hexapodhal.HexapodHAL(robot_id, TIME_FRAME)
+        self.robot = HexapodHAL(robot_id, TIME_FRAME)
         #controller instance
-        self.controller = cntrl.HexapodController()
+        self.controller = HexapodController()
         self.control_method = self.controller.goto
 
         #gait parametrization
@@ -114,8 +106,8 @@ class HexapodRobot:
         self.locomotion_status = True
         
         #cpg network instantiation
-        cpg = osc.OscilatorNetwork(6)
-        cpg.change_gait(osc.TRIPOD_GAIT_WEIGHTS)
+        cpg = OscilatorNetwork(6)
+        cpg.change_gait(TRIPOD_GAIT_WEIGHTS)
 
         coxa_angles= [0, 0, 0, 0, 0, 0]
         cycle_length = [0, 0, 0, 0, 0, 0]

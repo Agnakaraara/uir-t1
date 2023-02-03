@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import numpy as np
-from cpg.oscilator_constants import * 
-from random import uniform
 from random import randint
+from random import uniform
 
 from matplotlib import pyplot as plt
+
+from hexapod_robot.cpg.oscilator_constants import *
 
 INIT_GAIT = TRIPOD_GAIT_WEIGHTS
 
