@@ -14,7 +14,7 @@ sys.path.append('hexapod_explorer')
 from messages import *
 
 # switch to select between the simple variant or the hard variant
-SIMPLE_VARIANT = True
+SIMPLE_VARIANT = False
 
 if __name__ == "__main__":
     matplotlib.use('TkAgg')

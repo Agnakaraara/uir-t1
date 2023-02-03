@@ -83,7 +83,7 @@ class HexapodExplorer:
         if laser_scan is None or odometry is None:
             return grid_map_update
 
-        P: [float] = laser_scan.distances
+        P: [float] = laser_scan.distances.copy()
         robot_position = np.array([odometry.pose.position.x, odometry.pose.position.y])  # just x,y
         robot_rotation_matrix = odometry.pose.orientation.to_R()[0:2, 0:2]
         grid_origin = np.array([grid_map.origin.position.x, grid_map.origin.position.y])
@@ -99,6 +99,28 @@ class HexapodExplorer:
 
         laser_scan_cells = P
 
+        data = None
+        if grid_map.data is not None:
+            data = grid_map.data.reshape(grid_map_update.height, grid_map_update.width)
+
+        for x, y in laser_scan_cells:
+            new_width = max(grid_map.width if data is not None else 0, x) - min(0, x) + 1
+            new_height = max(grid_map.height if data is not None else 0, y) - min(0, y) + 1
+            if new_width != grid_map.width or new_height != grid_map.height:
+                print("Map Resized")
+                new_origin = np.array([min(0, x), min(0, y)]) * grid_map.resolution
+                x_shift = int((new_origin[0] - grid_origin[0]) / grid_map.resolution)
+                y_shift = int((new_origin[1] - grid_origin[1]) / grid_map.resolution)
+                new_data = 0.5 * np.ones((new_height, new_width))
+                if data is not None:
+                    new_data[-y_shift:-y_shift+grid_map.height, -x_shift:-x_shift+grid_map.width] = data
+
+                grid_map_update.width = new_width
+                grid_map_update.height = new_height
+                grid_map_update.origin = Pose(Vector3(new_origin[0], new_origin[1], 0.0), Quaternion(1, 0, 0, 0))
+                grid_map_update.data = new_data.flatten()
+                return self.fuse_laser_scan(grid_map_update, laser_scan, odometry)
+
         free_points = []
         occupied_points = []
 
@@ -107,8 +129,6 @@ class HexapodExplorer:
             occupied_points.append(scan_cell)                                          # point at the end is occupied
 
         # Bayesian update
-
-        data = grid_map.data.reshape(grid_map_update.height, grid_map_update.width)
 
         for (x, y) in free_points:
             data[y, x] = self.update_free(data[y, x])
