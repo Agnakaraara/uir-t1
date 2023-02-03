@@ -175,7 +175,7 @@ class HexapodExplorer:
 
     # F1 + F2
 
-    def find_free_edge_frontiers(self, grid_map: OccupancyGrid):
+    def find_free_edge_frontiers(self, grid_map: OccupancyGrid) -> [Pose]:
         """Method to find the free-edge frontiers (edge clusters between the free and unknown areas)
         Args:
             grid_map: OccupancyGrid - gridmap of the environment
@@ -185,7 +185,7 @@ class HexapodExplorer:
 
         # free-edge cell detection
 
-        data = grid_map.data.reshape(grid_map.height, grid_map.width)
+        data = grid_map.data.copy().reshape(grid_map.height, grid_map.width)
 
         for x in range(0, data.shape[0]):
             for y in range(0, data.shape[1]):
@@ -333,7 +333,7 @@ class HexapodExplorer:
 
         # TODO:[t1d-plan] grow the obstacles for robot_size
 
-        data = grid_map.data.reshape(grid_map_grow.height, grid_map_grow.width)
+        data = grid_map.data.copy().reshape(grid_map_grow.height, grid_map_grow.width)
 
         ranges = data.copy()
 
