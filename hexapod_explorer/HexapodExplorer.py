@@ -390,7 +390,7 @@ class HexapodExplorer:
         try:
             result = a_star((start.position.x, start.position.y), (goal.position.x, goal.position.y), gmap)
         except:
-            return None
+            return None            # start or end are blocked
 
         for path_point in result[0]:
             pose = Pose()
@@ -398,8 +398,8 @@ class HexapodExplorer:
             pose.position.y = path_point[1]
             path.poses.append(pose)
 
-        # add the goal pose
-        #  path.poses.append(goal)
+        if len(path.poses) == 0:
+            return None            # there is an obstacle blocking the path
 
         return path
 
