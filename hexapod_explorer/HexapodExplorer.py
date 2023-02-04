@@ -443,6 +443,8 @@ class HexapodExplorer:
                     path_simplified.poses.append(previous_pose)
                     break
 
+        path_simplified.poses = path_simplified.poses[1:]
+
         return path_simplified
 
     ###########################################################################
@@ -678,5 +680,14 @@ class HexapodExplorer:
         line = zip(np.linspace(cell1[0], cell2[0], n), np.linspace(cell1[1], cell2[1], n))
         for point in line:
             if gridMap.data[int(point[1])*gridMap.width + int(point[0])] == 1:
+                return False
+        return True
+
+    def isPathTraversable(self, poses: [Pose], gridMapP: OccupancyGrid) -> bool:
+        if len(poses) < 2: return False
+        for i in range(1, len(poses)):
+            cell1 = self.poseToCell(poses[i-1], gridMapP)
+            cell2 = self.poseToCell(poses[i], gridMapP)
+            if not self.cellsSeeEachOther(cell1, cell2, gridMapP):
                 return False
         return True

@@ -24,6 +24,7 @@ class Explorer:
     gridMapP: OccupancyGrid = None
     frontiers: [Pose] = []
     path: Path = None
+    currentWaypointIndex: int
     stop = False
     robot: HexapodRobot
     explor = HexapodExplorer()
@@ -74,7 +75,7 @@ class Explorer:
         while not self.stop:
             time.sleep(0.5)
             gridMapP = copy.deepcopy(self.gridMapP)
-            if gridMapP is None: continue
+            if gridMapP is None or self.path is not None and self.explor.isPathTraversable([self.robot.odometry_.pose] + self.path.poses[self.currentWaypointIndex:], gridMapP) and self.robot.navigation_goal is not None: continue
             self.frontiers = self.explor.find_free_edge_frontiers(self.gridMap, gridMapP)
             if len(self.frontiers) == 0: continue
 
@@ -83,17 +84,16 @@ class Explorer:
             pathRaw = self.explor.plan_path(gridMapP, start, goal)
             pathSimple = self.explor.simplify_path(gridMapP, pathRaw)
             self.path = pathSimple
-
-            if self.path is not None:
-                print("path set!")
+            self.currentWaypointIndex = -1
 
     def trajectory_following(self):
         """ trajectory following thread that assigns new goals to the robot navigation thread """
         while not self.stop:
             time.sleep(0.5)
-            if self.path is None: continue
-            if self.robot.navigation_goal is None:      # if robot is not already going somewhere
-                waypoint = self.path.poses.pop(0)
+            if self.path is None or self.currentWaypointIndex == len(self.path.poses)-1: continue
+            if self.robot.navigation_goal is None or self.currentWaypointIndex == -1:   # if robot is not already going somewhere
+                self.currentWaypointIndex += 1
+                waypoint = self.path.poses[self.currentWaypointIndex]
                 self.robot.goto(waypoint)
                 print("Goto:", waypoint.position.x, waypoint.position.y)
 
