@@ -389,7 +389,7 @@ class HexapodExplorer:
         gmap = OccupancyGridMap(data, gridMapP.resolution)
 
         try:
-            result = a_star(self.poseToCell(start, gridMapP), self.poseToCell(goal, gridMapP), gmap)
+            result = a_star(self.closestFreeCell(start, gridMapP), self.poseToCell(goal, gridMapP), gmap)
         except:
             return None            # start or end are blocked
 
@@ -694,3 +694,15 @@ class HexapodExplorer:
 
     def isPoseReachable(self, pose: Pose, odometry: Odometry, gridMapP: OccupancyGrid) -> bool:
         return self.plan_path(gridMapP, odometry.pose, pose) is not None
+
+    def closestFreeCell(self, pose: Pose, gridMapP: OccupancyGrid) -> tuple:
+        cell = self.poseToCell(pose, gridMapP)
+        if self.isCellFree(cell, gridMapP): return cell
+        for neighbour in self.neighbors8(cell):
+            if self.isCellFree(neighbour, gridMapP):
+                return neighbour
+        print("No neighbour free.")
+        return cell
+
+    def isCellFree(self, cell: tuple, gridMapP: OccupancyGrid) -> bool:
+        return gridMapP.data[cell[1] * gridMapP.width + cell[0]] == 0
