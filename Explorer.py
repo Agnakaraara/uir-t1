@@ -19,8 +19,8 @@ sys.path.append('hexapod_explorer')
 
 class Explorer:
 
-    gridMap: OccupancyGrid
-    gridMapP: OccupancyGrid
+    gridMap: OccupancyGrid = None
+    gridMapP: OccupancyGrid = None
     frontiers: [Pose] = []
     path: Path = None
     stop = False
@@ -60,20 +60,19 @@ class Explorer:
     def mapping(self):
         """ Mapping thread for fusing the laser scans into the grid map """
         while not self.stop:
+            time.sleep(0.5)
             laser_scan = self.robot.laser_scan_
             odometry = self.robot.odometry_
             self.gridMap = self.explor.fuse_laser_scan(self.gridMap, laser_scan, odometry)
-            time.sleep(0.5)
+            self.gridMapP = self.explor.grow_obstacles(self.gridMap, ROBOT_SIZE)
 
     def planning(self):
         """ Planning thread that takes the constructed gridmap, find frontiers, and select the next goal with the navigation path """
         while not self.stop:
-            self.gridMapP = self.explor.grow_obstacles(self.gridMap, ROBOT_SIZE)
+            time.sleep(0.5)
+            if self.gridMapP is None: continue
             self.frontiers = self.explor.find_free_edge_frontiers(self.gridMap, self.gridMapP)
-
-            if len(self.frontiers) == 0:
-                print("frontiers empty")
-                continue
+            if len(self.frontiers) == 0: continue
 
             start = self.robot.odometry_.pose
             goal = self.explor.pick_frontier_closest(self.frontiers, self.gridMapP, self.robot.odometry_)
@@ -84,11 +83,10 @@ class Explorer:
             if self.path is not None:
                 print("path set!")
 
-            time.sleep(0.5)
-
     def trajectory_following(self):
         """ trajectory following thread that assigns new goals to the robot navigation thread """
         while not self.stop:
+            time.sleep(0.5)
 
             if self.path is None:
                 # print("path none")
@@ -98,8 +96,6 @@ class Explorer:
                 waypoint = self.path.poses.pop(0)
                 self.robot.goto(waypoint)
                 print("Goto:", waypoint)
-
-            time.sleep(0.5)
 
 
 if __name__ == "__main__":
