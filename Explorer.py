@@ -116,13 +116,13 @@ if __name__ == "__main__":
         if ex0.gridMapP is not None and ex0.gridMapP.data is not None:
             ex0.gridMapP.plot(axis)
         if ex0.robot.odometry_ is not None:
-            plt.plot([ex0.robot.odometry_.pose.position.x], [ex0.robot.odometry_.pose.position.y], "D")
+            plt.plot([ex0.robot.odometry_.pose.position.x], [ex0.robot.odometry_.pose.position.y], "gD")
         for frontier in ex0.frontiers:
             plt.plot([frontier.position.x], [frontier.position.y], 'o')
         if ex0.path is not None:
             ex0.path.plot(axis)
         if ex0.robot.navigation_goal is not None:
-            plt.plot([ex0.robot.navigation_goal.position.x], [ex0.robot.navigation_goal.position.y], 'X')
+            plt.plot([ex0.robot.navigation_goal.position.x], [ex0.robot.navigation_goal.position.y], 'x', markersize=10)
         plt.xlabel('x[m]')
         plt.ylabel('y[m]')
         axis.set_aspect('equal', 'box')
