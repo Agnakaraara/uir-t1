@@ -101,16 +101,16 @@ class HexapodExplorer:
 
         data = None
         if grid_map.data is not None:
-            data = grid_map.data.reshape(grid_map_update.height, grid_map_update.width)
+            data = grid_map.data.reshape(grid_map.height, grid_map.width)
 
         for x, y in laser_scan_cells:
-            new_width = max(grid_map.width if data is not None else 0, x + 1) - min(0, x)
-            new_height = max(grid_map.height if data is not None else 0, y + 1) - min(0, y)
-            if new_width != grid_map.width or new_height != grid_map.height:
-                print("Map Resized")
-                new_origin = grid_origin + np.array([min(0, x), min(0, y)]) * grid_map.resolution
-                x_shift = int((new_origin[0] - grid_origin[0]) / grid_map.resolution)
-                y_shift = int((new_origin[1] - grid_origin[1]) / grid_map.resolution)
+            if x < 0 or y < 0 or data is None or x >= grid_map.width or y >= grid_map.height:
+                x_shift = min(0, x)
+                y_shift = min(0, y)
+                new_width = max(grid_map.width if data is not None else 0, x+1) - x_shift
+                new_height = max(grid_map.height if data is not None else 0, y+1) - y_shift
+                new_origin = grid_origin + np.array([x_shift, y_shift]) * grid_map.resolution
+                print("Map Resized", new_height, new_width)
                 new_data = 0.5 * np.ones((new_height, new_width))
                 if data is not None:
                     new_data[-y_shift:-y_shift+grid_map.height, -x_shift:-x_shift+grid_map.width] = data

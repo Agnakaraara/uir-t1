@@ -39,8 +39,6 @@ class HexapodController:
             if is_in_goal:
                 return None
 
-            print(target_to_goal)
-
             targ_heading = np.arctan2(diff.y, diff.x)
             cur_heading = odometry.pose.orientation.to_Euler()[0]       # quaternion -> euler angle
 
