@@ -122,4 +122,4 @@ if __name__ == "__main__":
         plt.ylabel('y[m]')
         axis.set_aspect('equal', 'box')
         plt.show()
-        plt.pause(1)
+        plt.pause(0.5)
