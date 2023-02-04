@@ -410,30 +410,20 @@ class HexapodExplorer:
         Returns:
             path_simple: Path - simplified path
         """
-        if gridMapP is None or path is None:
-            return None
-
-        grid_origin = np.array([gridMapP.origin.position.x, gridMapP.origin.position.y])
+        if gridMapP is None or path is None: return None
+        data = gridMapP.data.reshape(gridMapP.height, gridMapP.width)
 
         path_simplified = Path()
-        # add the start pose
         path_simplified.poses.append(path.poses[0])
-
-        # TODO:[t1d-plan] simplifie the planned path
-
-        data = gridMapP.data.reshape(gridMapP.height, gridMapP.width)
 
         i = 1
 
-        # iterate through the path and simplify the path
-        while path_simplified.poses[-1] != path.poses[-1]:  # until the goal is not reached
-            # find the connected segment
+        while path_simplified.poses[-1] != path.poses[-1]:      # until the goal is not reached
             previous_pose = path_simplified.poses[-1]
             for pose in path.poses[i:]:
                 end = path_simplified.poses[-1]
-                end = self.world_to_map(np.array([end.position.x, end.position.y]), grid_origin, gridMapP.resolution)
-                pose_point = self.world_to_map(np.array([pose.position.x, pose.position.y]), grid_origin,
-                                               gridMapP.resolution)
+                end = self.poseToCell(end, gridMapP)
+                pose_point = self.poseToCell(pose, gridMapP)
                 line = self.bresenham_line(end, pose_point)
                 collide = False
                 for point in line:
@@ -452,9 +442,6 @@ class HexapodExplorer:
                 else:  # there is collision
                     path_simplified.poses.append(previous_pose)
                     break
-
-        # add the goal pose
-        # path_simplified.poses.append(path.poses[-1])
 
         return path_simplified
 
