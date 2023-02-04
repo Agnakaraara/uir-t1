@@ -698,7 +698,7 @@ class HexapodExplorer:
     def closestFreeCell(self, pose: Pose, gridMapP: OccupancyGrid) -> tuple:
         cell = self.poseToCell(pose, gridMapP)
         if self.isCellFree(cell, gridMapP): return cell
-        for neighbour in self.neighbors8(cell):
+        for neighbour in self.cellNeighbours(cell):
             if self.isCellFree(neighbour, gridMapP):
                 return neighbour
         print("No neighbour free.")
@@ -706,3 +706,8 @@ class HexapodExplorer:
 
     def isCellFree(self, cell: tuple, gridMapP: OccupancyGrid) -> bool:
         return gridMapP.data[cell[1] * gridMapP.width + cell[0]] == 0
+
+    def cellNeighbours(self, cell: tuple) -> [tuple]:
+        return [(cell[0] + 1, cell[1]), (cell[0], cell[1] + 1), (cell[0] - 1, cell[1]), (cell[0], cell[1] - 1),
+                (cell[0] + 1, cell[1] + 1), (cell[0] - 1, cell[1] - 1), (cell[0] + 1, cell[1] - 1),
+                (cell[0] - 1, cell[1] + 1)]
