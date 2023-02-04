@@ -77,7 +77,11 @@ class Explorer:
             gridMapP = copy.deepcopy(self.gridMapP)
             if gridMapP is None or self.path is not None and self.explor.isPathTraversable([self.robot.odometry_.pose] + self.path.poses[self.currentWaypointIndex:], gridMapP) and self.robot.navigation_goal is not None: continue
             self.frontiers = self.explor.find_free_edge_frontiers(self.gridMap, gridMapP)
-            if len(self.frontiers) == 0: continue
+
+            if len(self.frontiers) == 0:
+                self.stop = True
+                print("No more frontiers! Stopping robot.")
+                return
 
             start = self.robot.odometry_.pose
             goal = self.explor.pick_frontier_closest(self.frontiers, gridMapP, self.robot.odometry_)
@@ -85,6 +89,7 @@ class Explorer:
             pathSimple = self.explor.simplify_path(gridMapP, pathRaw)
             self.path = pathSimple
             self.currentWaypointIndex = -1
+            print("Path recalculated.")
 
     def trajectory_following(self):
         """ trajectory following thread that assigns new goals to the robot navigation thread """
