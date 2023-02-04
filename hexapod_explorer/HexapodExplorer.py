@@ -176,7 +176,7 @@ class HexapodExplorer:
 
     # F1 + F2
 
-    def find_free_edge_frontiers(self, grid_map: OccupancyGrid, gridMapP: OccupancyGrid) -> [Pose]:
+    def find_free_edge_frontiers(self, grid_map: OccupancyGrid, gridMapP: OccupancyGrid, odometry: Odometry) -> [Pose]:
         """Method to find the free-edge frontiers (edge clusters between the free and unknown areas)
         Args:
             grid_map: OccupancyGrid - gridmap of the environment
@@ -222,7 +222,7 @@ class HexapodExplorer:
 
         # free-edge centroids
 
-        pose_list = []
+        frontiers = []
 
         for label, cells in clusters.items():
             f = len(cells)
@@ -231,10 +231,10 @@ class HexapodExplorer:
             kmeans = KMeans(n_clusters=n_r, random_state=0, tol=1e-3, n_init=1, max_iter=100).fit(cells)
             for centroid in kmeans.cluster_centers_:
                 if dataP[int(centroid[1]), int(centroid[0])] == 0:           # if centroid is reachable
-                    pose_list.append(self.cellToPose(centroid, grid_map))
+                    frontiers.append(self.cellToPose(centroid, grid_map))
                 else:
                     closest = min(cells, key=lambda cell: self.distanceOfCellsEuclidean(cell, centroid))   # closest reachable free-edge
-                    pose_list.append(self.cellToPose(closest, grid_map))
+                    frontiers.append(self.cellToPose(closest, grid_map))
 
             # t1e
             #centroid = (0, 0)
@@ -247,11 +247,11 @@ class HexapodExplorer:
             #pose.position.y = centroid[1] * grid_map.resolution + grid_map.origin.position.y
             #pose_list.append(pose)
 
-        return pose_list
+        return filter(lambda frontier: self.isPoseReachable(frontier, odometry, gridMapP), frontiers)
 
     # F3
 
-    def find_inf_frontiers(self, grid_map: OccupancyGrid, gridMapP: OccupancyGrid) -> [(Pose, float)]:  # project F3
+    def find_inf_frontiers(self, grid_map: OccupancyGrid, gridMapP: OccupancyGrid, odometry: Odometry) -> [(Pose, float)]:  # project F3
         """Method to find the frontiers based on information theory approach"""
 
         frontiersWeighted = []
@@ -263,7 +263,7 @@ class HexapodExplorer:
             H[x] = 0 if p == 0 or p == 1 else -p * np.log(p) - (1-p) * np.log(1-p)
         H = H.reshape((grid_map.height, grid_map.width))
 
-        frontiers = self.find_free_edge_frontiers(grid_map, gridMapP)
+        frontiers = self.find_free_edge_frontiers(grid_map, gridMapP, odometry)
 
         for frontier in frontiers:
             frontier_cell = self.poseToCell(frontier, grid_map)
@@ -691,3 +691,6 @@ class HexapodExplorer:
             if not self.cellsSeeEachOther(cell1, cell2, gridMapP):
                 return False
         return True
+
+    def isPoseReachable(self, pose: Pose, odometry: Odometry, gridMapP: OccupancyGrid) -> bool:
+        return self.plan_path(gridMapP, odometry.pose, pose) is not None

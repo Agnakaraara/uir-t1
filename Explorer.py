@@ -74,22 +74,23 @@ class Explorer:
         """ Planning thread that takes the constructed gridmap, find frontiers, and select the next goal with the navigation path """
         while not self.stop:
             time.sleep(0.5)
+            odometry = self.robot.odometry_
             gridMapP = copy.deepcopy(self.gridMapP)
-            if gridMapP is None or self.path is not None and self.explor.isPathTraversable([self.robot.odometry_.pose] + self.path.poses[self.currentWaypointIndex:], gridMapP) and self.robot.navigation_goal is not None: continue
+            if gridMapP is None or self.path is not None and self.explor.isPathTraversable([odometry.pose] + self.path.poses[self.currentWaypointIndex:], gridMapP) and self.robot.navigation_goal is not None: continue
 
-            start = self.robot.odometry_.pose
+            start = odometry.pose
             goal: Pose
 
             if sys.argv[1] == "p1":
-                self.frontiers = self.explor.find_free_edge_frontiers(self.gridMap, gridMapP)
-                goal = self.explor.pick_frontier_closest(self.frontiers, gridMapP, self.robot.odometry_)
+                self.frontiers = self.explor.find_free_edge_frontiers(self.gridMap, gridMapP, odometry)
+                goal = self.explor.pick_frontier_closest(self.frontiers, gridMapP, odometry)
             elif sys.argv[1] == "p2":
-                frontiers = self.explor.find_inf_frontiers(self.gridMap, gridMapP)
+                frontiers = self.explor.find_inf_frontiers(self.gridMap, gridMapP, odometry)
                 self.frontiers = list(map(lambda x: x[0], frontiers))
-                goal = self.explor.pick_frontier_inf(frontiers, gridMapP, self.robot.odometry_)
+                goal = self.explor.pick_frontier_inf(frontiers, gridMapP, odometry)
             elif sys.argv[1] == "p3":
-                self.frontiers = self.explor.find_free_edge_frontiers(self.gridMap, gridMapP)
-                goal = self.explor.pick_frontier_tsp(self.frontiers, gridMapP, self.robot.odometry_)
+                self.frontiers = self.explor.find_free_edge_frontiers(self.gridMap, gridMapP, odometry)
+                goal = self.explor.pick_frontier_tsp(self.frontiers, gridMapP, odometry)
 
             if len(self.frontiers) == 0:
                 self.stop = True
@@ -124,8 +125,8 @@ if __name__ == "__main__":
     plt.ion()
     while True:
         plt.cla()   # clear axis
-        if ex0.gridMapP is not None and ex0.gridMapP.data is not None:
-            ex0.gridMapP.plot(axis)
+        if ex0.gridMap is not None:
+            ex0.gridMap.plot(axis)
         if ex0.robot.odometry_ is not None:
             plt.plot([ex0.robot.odometry_.pose.position.x], [ex0.robot.odometry_.pose.position.y], "gD")
         for frontier in ex0.frontiers:
