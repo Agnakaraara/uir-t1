@@ -653,10 +653,10 @@ class HexapodExplorer:
         return line
 
     def world_to_map(self, p, grid_origin, grid_resolution):
-        return ((p - grid_origin) / grid_resolution).astype(int)
+        return np.round((p - grid_origin) / grid_resolution).astype(int)
 
     def poseToCell(self, pose: Pose, gridMap: OccupancyGrid) -> tuple:
-        return int((pose.position.x - gridMap.origin.position.x) / gridMap.resolution), int((pose.position.y - gridMap.origin.position.y) / gridMap.resolution)
+        return round((pose.position.x - gridMap.origin.position.x) / gridMap.resolution), round((pose.position.y - gridMap.origin.position.y) / gridMap.resolution)
 
     def cellToPose(self, cell: tuple, gridMap: OccupancyGrid) -> Pose:
         pose = Pose()

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import copy
 import sys
 import threading as thread
 from threading import Thread
@@ -72,14 +73,15 @@ class Explorer:
         """ Planning thread that takes the constructed gridmap, find frontiers, and select the next goal with the navigation path """
         while not self.stop:
             time.sleep(0.5)
-            if self.gridMapP is None: continue
-            self.frontiers = self.explor.find_free_edge_frontiers(self.gridMap, self.gridMapP)
+            gridMapP = copy.deepcopy(self.gridMapP)
+            if gridMapP is None: continue
+            self.frontiers = self.explor.find_free_edge_frontiers(self.gridMap, gridMapP)
             if len(self.frontiers) == 0: continue
 
             start = self.robot.odometry_.pose
-            goal = self.explor.pick_frontier_closest(self.frontiers, self.gridMapP, self.robot.odometry_)
-            pathRaw = self.explor.plan_path(self.gridMapP, start, goal)
-            pathSimple = self.explor.simplify_path(self.gridMapP, pathRaw)
+            goal = self.explor.pick_frontier_closest(self.frontiers, gridMapP, self.robot.odometry_)
+            pathRaw = self.explor.plan_path(gridMapP, start, goal)
+            pathSimple = self.explor.simplify_path(gridMapP, pathRaw)
             self.path = pathSimple
 
             if self.path is not None:
@@ -89,15 +91,11 @@ class Explorer:
         """ trajectory following thread that assigns new goals to the robot navigation thread """
         while not self.stop:
             time.sleep(0.5)
-
-            if self.path is None:
-                # print("path none")
-                continue
-
+            if self.path is None: continue
             if self.robot.navigation_goal is None:      # if robot is not already going somewhere
                 waypoint = self.path.poses.pop(0)
                 self.robot.goto(waypoint)
-                print("Goto:", waypoint)
+                print("Goto:", waypoint.position.x, waypoint.position.y)
 
 
 if __name__ == "__main__":
@@ -112,11 +110,14 @@ if __name__ == "__main__":
         plt.cla()   # clear axis
         if ex0.gridMapP is not None and ex0.gridMapP.data is not None:
             ex0.gridMapP.plot(axis)
-        plt.plot([ex0.robot.odometry_.pose.position.x], [ex0.robot.odometry_.pose.position.y], "D")
+        if ex0.robot.odometry_ is not None:
+            plt.plot([ex0.robot.odometry_.pose.position.x], [ex0.robot.odometry_.pose.position.y], "D")
         for frontier in ex0.frontiers:
             plt.plot([frontier.position.x], [frontier.position.y], 'o')
         if ex0.path is not None:
             ex0.path.plot(axis)
+        if ex0.robot.navigation_goal is not None:
+            plt.plot([ex0.robot.navigation_goal.position.x], [ex0.robot.navigation_goal.position.y], 'X')
         plt.xlabel('x[m]')
         plt.ylabel('y[m]')
         axis.set_aspect('equal', 'box')

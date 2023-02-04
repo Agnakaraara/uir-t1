@@ -45,8 +45,11 @@ class HexapodController:
             diff_h = targ_heading - cur_heading
             diff_h = (diff_h + math.pi) % (2*math.pi) - math.pi
 
-            cmd_msg.linear.x = target_to_goal
-            cmd_msg.angular.z = diff_h * C_TURNING_SPEED
+            lin_mult = 0 if abs(diff_h) > math.pi/6 else 500
+            turn_mult = 500 if abs(diff_h) > math.pi/6 else C_TURNING_SPEED
+
+            cmd_msg.linear.x = target_to_goal * lin_mult
+            cmd_msg.angular.z = diff_h * turn_mult
 
         return cmd_msg
 
