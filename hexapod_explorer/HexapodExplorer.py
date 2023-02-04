@@ -233,7 +233,7 @@ class HexapodExplorer:
             f = len(cells)
             D = LASER_SCAN_RANGE_MAX / grid_map.resolution
             n_r = int(1 + np.floor(f/D + 0.5))
-            kmeans = KMeans(n_clusters=n_r, random_state=0, n_init="auto").fit(cells)
+            kmeans = KMeans(n_clusters=n_r, random_state=0).fit(cells)
             for centroid in kmeans.cluster_centers_:
                 if dataP[int(centroid[1]), int(centroid[0])] == 0:    # ignore unreachable frontiers
                     pose_list.append(self.cellToPose(centroid, grid_map))

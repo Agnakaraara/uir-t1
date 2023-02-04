@@ -22,7 +22,7 @@ class Explorer:
     gridMap: OccupancyGrid
     gridMapP: OccupancyGrid
     frontiers: [Pose] = []
-    path: Path
+    path: Path = None
     stop = False
     robot: HexapodRobot
     explor = HexapodExplorer()
@@ -110,6 +110,8 @@ if __name__ == "__main__":
         plt.cla()   # clear axis
         if ex0.gridMapP is not None and ex0.gridMapP.data is not None:
             ex0.gridMapP.plot(axis)
+        for frontier in ex0.frontiers:
+            plt.plot([frontier.position.x], [frontier.position.y], '.', markersize=20)
         if ex0.path is not None:
             ex0.path.plot(axis)
         plt.xlabel('x[m]')
