@@ -84,7 +84,7 @@ class Explorer:
                 self.frontiers = self.explor.find_free_edge_frontiers(self.gridMap, gridMapP)
                 goal = self.explor.pick_frontier_closest(self.frontiers, gridMapP, self.robot.odometry_)
             elif sys.argv[1] == "p2":
-                frontiers = self.explor.find_inf_frontiers(self.gridMap)
+                frontiers = self.explor.find_inf_frontiers(self.gridMap, gridMapP)
                 self.frontiers = map(lambda x: x[0], frontiers)
                 goal = self.explor.pick_frontier_inf(frontiers, gridMapP, self.robot.odometry_)
             elif sys.argv[1] == "p3":

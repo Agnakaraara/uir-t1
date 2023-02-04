@@ -255,7 +255,7 @@ class HexapodExplorer:
 
     # F3
 
-    def find_inf_frontiers(self, grid_map: OccupancyGrid) -> [(Pose, float)]:  # project F3
+    def find_inf_frontiers(self, grid_map: OccupancyGrid, gridMapP: OccupancyGrid) -> [(Pose, float)]:  # project F3
         """Method to find the frontiers based on information theory approach"""
 
         frontiersWeighted = []
@@ -266,7 +266,7 @@ class HexapodExplorer:
             H[x] = 0 if p == 0 or p == 1 else -p * np.log(p) - (1-p) * np.log(1-p)
         H = H.reshape((grid_map.height, grid_map.width))
 
-        frontiers = self.find_free_edge_frontiers(grid_map)
+        frontiers = self.find_free_edge_frontiers(grid_map, gridMapP)
 
         range_max = LASER_SCAN_RANGE_MAX / grid_map.resolution
         range_min = LASER_SCAN_RANGE_MIN / grid_map.resolution
@@ -315,8 +315,8 @@ class HexapodExplorer:
     # P3
 
     def pick_frontier_tsp(self, frontiers: [Pose], gridMapP: OccupancyGrid, odometry: Odometry) -> Pose:
-        if len(frontiers) == 1:
-            return frontiers[0]
+        if len(frontiers) == 0: return None
+        if len(frontiers) == 1: return frontiers[0]
         points = [odometry.pose] + frontiers
         n = len(points)
         distance_matrix = np.zeros((n, n))
