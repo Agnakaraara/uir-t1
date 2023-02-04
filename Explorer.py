@@ -76,15 +76,26 @@ class Explorer:
             time.sleep(0.5)
             gridMapP = copy.deepcopy(self.gridMapP)
             if gridMapP is None or self.path is not None and self.explor.isPathTraversable([self.robot.odometry_.pose] + self.path.poses[self.currentWaypointIndex:], gridMapP) and self.robot.navigation_goal is not None: continue
-            self.frontiers = self.explor.find_free_edge_frontiers(self.gridMap, gridMapP)
+
+            start = self.robot.odometry_.pose
+            goal: Pose
+
+            if sys.argv[1] == "p1":
+                self.frontiers = self.explor.find_free_edge_frontiers(self.gridMap, gridMapP)
+                goal = self.explor.pick_frontier_closest(self.frontiers, gridMapP, self.robot.odometry_)
+            elif sys.argv[1] == "p2":
+                frontiers = self.explor.find_inf_frontiers(self.gridMap)
+                self.frontiers = map(lambda x: x[0], frontiers)
+                goal = self.explor.pick_frontier_inf(frontiers, gridMapP, self.robot.odometry_)
+            elif sys.argv[1] == "p3":
+                self.frontiers = self.explor.find_free_edge_frontiers(self.gridMap, gridMapP)
+                goal = self.explor.pick_frontier_tsp(self.frontiers, gridMapP, self.robot.odometry_)
 
             if len(self.frontiers) == 0:
                 self.stop = True
                 print("No more frontiers! Stopping robot.")
                 return
 
-            start = self.robot.odometry_.pose
-            goal = self.explor.pick_frontier_closest(self.frontiers, gridMapP, self.robot.odometry_)
             pathRaw = self.explor.plan_path(gridMapP, start, goal)
             pathSimple = self.explor.simplify_path(gridMapP, pathRaw)
             self.path = pathSimple
