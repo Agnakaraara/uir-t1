@@ -247,7 +247,7 @@ class HexapodExplorer:
             #pose.position.y = centroid[1] * grid_map.resolution + grid_map.origin.position.y
             #pose_list.append(pose)
 
-        return filter(lambda frontier: self.isPoseReachable(frontier, odometry, gridMapP), frontiers)
+        return list(filter(lambda frontier: self.isPoseReachable(frontier, odometry, gridMapP), frontiers))
 
     # F3
 
@@ -386,10 +386,12 @@ class HexapodExplorer:
         """
 
         data = gridMapP.data.copy().reshape(gridMapP.height, gridMapP.width)
+        startCell = self.poseToCell(start, gridMapP)
+        data[startCell[1], startCell[0]] = 0
         gmap = OccupancyGridMap(data, gridMapP.resolution)
 
         try:
-            result = a_star(self.closestFreeCell(start, gridMapP), self.poseToCell(goal, gridMapP), gmap)
+            result = a_star(startCell, self.poseToCell(goal, gridMapP), gmap)
         except:
             return None            # start or end are blocked
 
