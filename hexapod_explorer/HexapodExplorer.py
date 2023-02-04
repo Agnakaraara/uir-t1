@@ -386,29 +386,24 @@ class HexapodExplorer:
             path: Path - path between the start and goal Pose on the map
         """
 
-        path = Path()
-        # add the start pose
-        # path.poses.append(start)
-
-        # TODO:[t1d-plan] plan the path between the start and the goal Pose
-
-        data = gridMapP.data.reshape(gridMapP.height, gridMapP.width)
-
+        data = gridMapP.data.copy().reshape(gridMapP.height, gridMapP.width)
         gmap = OccupancyGridMap(data, gridMapP.resolution)
 
         try:
-            result = a_star((start.position.x, start.position.y), (goal.position.x, goal.position.y), gmap)
+            result = a_star(self.poseToCell(start, gridMapP), self.poseToCell(goal, gridMapP), gmap)
         except:
             return None            # start or end are blocked
+
+        if len(result[0]) == 0:
+            return None            # there is an obstacle blocking the path
+
+        path = Path()
 
         for path_point in result[0]:
             pose = Pose()
             pose.position.x = path_point[0]
             pose.position.y = path_point[1]
             path.poses.append(pose)
-
-        if len(path.poses) == 0:
-            return None            # there is an obstacle blocking the path
 
         return path
 
@@ -679,7 +674,7 @@ class HexapodExplorer:
         return ((p - grid_origin) / grid_resolution).astype(int)
 
     def poseToCell(self, pose: Pose, gridMap: OccupancyGrid) -> tuple:
-        return (pose.position.x - gridMap.origin.position.x) / gridMap.resolution, (pose.position.y - gridMap.origin.position.y) / gridMap.resolution
+        return int((pose.position.x - gridMap.origin.position.x) / gridMap.resolution), int((pose.position.y - gridMap.origin.position.y) / gridMap.resolution)
 
     def cellToPose(self, cell: tuple, gridMap: OccupancyGrid) -> Pose:
         pose = Pose()
@@ -693,7 +688,6 @@ class HexapodExplorer:
     def distanceOfPosesAStar(self, pose1: Pose, pose2: Pose, gridMapP: OccupancyGrid) -> float:
         path = self.plan_path(gridMapP, pose1, pose2)
         if path is None:
-            print("pose unreachable")
             return 1000
         return len(path.poses)      # uses non-simplified path so we only need to count number of cells
 

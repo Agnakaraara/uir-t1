@@ -29,12 +29,12 @@ def _get_movements_8n():
             (1, -1, s2)]
 
 
-def a_star(start_m, goal_m, gmap, movement='8N', occupancy_cost_factor=3):
+def a_star(start: tuple, goal: tuple, gmap, movement='8N', occupancy_cost_factor=3):
     """
     A* for 2D occupancy grid.
 
-    :param start_m: start node (x, y) in meters
-    :param goal_m: goal node (x, y) in meters
+    :param start: start node (x, y) cell
+    :param goal: goal node (x, y) cell
     :param gmap: the grid map
     :param movement: select between 4-connectivity ('4N') and 8-connectivity ('8N', default)
     :param occupancy_cost_factor: a number the will be multiplied by the occupancy probability
@@ -42,10 +42,6 @@ def a_star(start_m, goal_m, gmap, movement='8N', occupancy_cost_factor=3):
 
     :return: a tuple that contains: (the resulting path in meters, the resulting path in data array indices)
     """
-
-    # get array indices of start and goal
-    start = gmap.get_index_from_coordinates(start_m[0], start_m[1])
-    goal = gmap.get_index_from_coordinates(goal_m[0], goal_m[1])
 
     # check if start and goal nodes correspond to free spaces
     if gmap.is_occupied_idx(start):
