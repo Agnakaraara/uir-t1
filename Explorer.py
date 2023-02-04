@@ -63,8 +63,10 @@ class Explorer:
             time.sleep(0.5)
             laser_scan = self.robot.laser_scan_
             odometry = self.robot.odometry_
-            self.gridMap = self.explor.fuse_laser_scan(self.gridMap, laser_scan, odometry)
-            self.gridMapP = self.explor.grow_obstacles(self.gridMap, ROBOT_SIZE)
+            gridMap = self.explor.fuse_laser_scan(self.gridMap, laser_scan, odometry)
+            gridMapP = self.explor.grow_obstacles(gridMap, ROBOT_SIZE)
+            self.gridMap = gridMap
+            self.gridMapP = gridMapP
 
     def planning(self):
         """ Planning thread that takes the constructed gridmap, find frontiers, and select the next goal with the navigation path """
@@ -110,7 +112,7 @@ if __name__ == "__main__":
         plt.cla()   # clear axis
         if ex0.gridMapP is not None and ex0.gridMapP.data is not None:
             ex0.gridMapP.plot(axis)
-        plt.plot([ex0.robot.odometry_.pose.position.x], [ex0.robot.odometry_.pose.position.x], "D")
+        plt.plot([ex0.robot.odometry_.pose.position.x], [ex0.robot.odometry_.pose.position.y], "D")
         for frontier in ex0.frontiers:
             plt.plot([frontier.position.x], [frontier.position.y], 'o')
         if ex0.path is not None:

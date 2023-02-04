@@ -83,21 +83,20 @@ class HexapodExplorer:
         if laser_scan is None or odometry is None:
             return grid_map_update
 
-        P: [float] = laser_scan.distances.copy()
         robot_position = np.array([odometry.pose.position.x, odometry.pose.position.y])  # just x,y
         robot_rotation_matrix = odometry.pose.orientation.to_R()[0:2, 0:2]
         grid_origin = np.array([grid_map.origin.position.x, grid_map.origin.position.y])
         robot_position_cell = self.world_to_map(robot_position, grid_origin, grid_map.resolution)
 
-        for i in range(0, len(P)):
-            if P[i] < laser_scan.range_min: P[i] = laser_scan.range_min
-            if P[i] > laser_scan.range_max: P[i] = laser_scan.range_max
-            angle = laser_scan.angle_min + i * laser_scan.angle_increment
-            P[i] = np.array([math.cos(angle) * P[i], math.sin(angle) * P[i]])
-            P[i] = robot_rotation_matrix @ np.transpose(P[i]) + robot_position
-            P[i] = self.world_to_map(P[i], grid_origin, grid_map.resolution)
+        laser_scan_cells = []
 
-        laser_scan_cells = P
+        for i, dist in enumerate(laser_scan.distances):
+            if dist < laser_scan.range_min or dist > laser_scan.range_max: continue
+            angle = laser_scan.angle_min + i * laser_scan.angle_increment
+            relative = np.array([math.cos(angle) * dist, math.sin(angle) * dist]).T
+            absolute = robot_rotation_matrix @ relative + robot_position
+            cell = self.world_to_map(absolute, grid_origin, grid_map.resolution)
+            laser_scan_cells.append(cell)
 
         data = None
         if grid_map.data is not None:
