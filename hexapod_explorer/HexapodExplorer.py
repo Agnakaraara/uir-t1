@@ -394,16 +394,12 @@ class HexapodExplorer:
         except:
             return None            # start or end are blocked
 
-        if len(result[0]) == 0:
+        if len(result[1]) == 0:
             return None            # there is an obstacle blocking the path
 
         path = Path()
-
-        for path_point in result[0]:
-            pose = Pose()
-            pose.position.x = path_point[0]
-            pose.position.y = path_point[1]
-            path.poses.append(pose)
+        for waypoint in result[1]:
+            path.poses.append(self.cellToPose(waypoint, gridMapP))
 
         return path
 
