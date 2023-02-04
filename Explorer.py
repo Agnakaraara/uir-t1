@@ -110,8 +110,9 @@ if __name__ == "__main__":
         plt.cla()   # clear axis
         if ex0.gridMap is not None and ex0.gridMap.data is not None:
             ex0.gridMap.plot(axis)
+        plt.plot([ex0.robot.odometry_.pose.position.x], [ex0.robot.odometry_.pose.position.x], "D")
         for frontier in ex0.frontiers:
-            plt.plot([frontier.position.x], [frontier.position.y], '.', markersize=20)
+            plt.plot([frontier.position.x], [frontier.position.y], 'o')
         if ex0.path is not None:
             ex0.path.plot(axis)
         plt.xlabel('x[m]')
