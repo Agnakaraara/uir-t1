@@ -8,9 +8,9 @@ from threading import Thread
 import matplotlib
 import matplotlib.pyplot as plt
 
-from Master import Master
 from hexapod_explorer.HexapodExplorer import HexapodExplorer
 from hexapod_robot.HexapodRobot import HexapodRobot
+from hexapod_robot.HexapodRobotConst import ROBOT_SIZE
 from messages import *
 
 sys.path.append('../')
@@ -20,7 +20,6 @@ sys.path.append('hexapod_explorer')
 
 class Explorer:
 
-    master: Master
     frontiers: [Pose] = []
     path: Path = None
     currentWaypointIndex: int
@@ -46,7 +45,7 @@ class Explorer:
         self.robot.stop_navigation()
         self.robot.turn_off()
 
-    def planning(self):
+    def planning(self, master):
         """ Planning thread that takes the constructed gridmap, find frontiers, and select the next goal with the navigation path """
         while not master.stop:
             time.sleep(0.5)
@@ -89,6 +88,43 @@ class Explorer:
                 waypoint = self.path.poses[self.currentWaypointIndex]
                 self.robot.goto(waypoint)
                 print("Goto:", waypoint.position.x, waypoint.position.y)
+
+
+class Master:
+
+    gridMap: OccupancyGrid = None
+    gridMapP: OccupancyGrid = None
+    stop = False
+    explorers: [Explorer]
+    explor = HexapodExplorer()
+
+    def __init__(self):
+        gridMap = OccupancyGrid()
+        gridMap.resolution = 0.1
+        gridMap.width = 1
+        gridMap.height = 1
+        gridMap.data = 0.5 * np.ones(gridMap.height * gridMap.width)
+        self.gridMap = gridMap
+
+    def start(self):
+
+        mapping_thread = Thread(target=self.mapping)
+        mapping_thread.start()
+
+        for ex in self.explorers:
+            ex.start()
+
+    def mapping(self):
+        """ Mapping thread for fusing the laser scans into the grid map """
+        while not self.stop:
+            time.sleep(0.5)
+            for ex in self.explorers:
+                laser_scan = ex.robot.laser_scan_
+                odometry = ex.robot.odometry_
+                gridMap = self.explor.fuse_laser_scan(self.gridMap, laser_scan, odometry)
+                gridMapP = self.explor.grow_obstacles(gridMap, ROBOT_SIZE)
+                self.gridMap = gridMap
+                self.gridMapP = gridMapP
 
 
 if __name__ == "__main__":
