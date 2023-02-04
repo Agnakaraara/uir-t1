@@ -4,7 +4,6 @@
 import copy
 import heapq
 
-# import messages
 import scipy.ndimage
 import scipy.ndimage as ndimg
 import skimage.measure
@@ -12,12 +11,9 @@ from sklearn.cluster import KMeans
 
 from hexapod_explorer.a_star import a_star
 from hexapod_explorer.gridmap import OccupancyGridMap
-from hexapod_robot.HexapodRobotConst import LASER_SCAN_RANGE_MAX, LASER_SCAN_RANGE_MIN
+from hexapod_robot.HexapodRobotConst import LASER_SCAN_RANGE_MAX
 from lkh.invoke_LKH import solve_TSP
 from messages import *
-
-
-# cpg network
 
 
 class PriorityQueue:
@@ -259,6 +255,7 @@ class HexapodExplorer:
         """Method to find the frontiers based on information theory approach"""
 
         frontiersWeighted = []
+        rays = 8
 
         H = grid_map.data.copy()
         for x in range(len(H)):
@@ -268,17 +265,20 @@ class HexapodExplorer:
 
         frontiers = self.find_free_edge_frontiers(grid_map, gridMapP)
 
-        range_max = LASER_SCAN_RANGE_MAX / grid_map.resolution
-        range_min = LASER_SCAN_RANGE_MIN / grid_map.resolution
-
         for frontier in frontiers:
             frontier_cell = self.poseToCell(frontier, grid_map)
             I_action = 0.0
-            for y in range(max(int(frontier_cell[1]-range_max), 0), min(int(frontier_cell[1]+range_max+1), grid_map.height)):
-                for x in range(max(int(frontier_cell[0]-range_max), 0), min(int(frontier_cell[0]+range_max+1), grid_map.width)):
-                    dist = self.distanceOfCellsEuclidean((x, y), frontier_cell)
-                    if range_min <= dist <= range_max and self.cellsSeeEachOther((x, y), frontier_cell, grid_map):
-                        I_action += H[y, x]
+            for i in range(rays):
+                angle = i * math.pi/rays
+                rayEndPose = Pose()
+                rayEndPose.position.x = frontier.position.x + math.cos(angle) * LASER_SCAN_RANGE_MAX
+                rayEndPose.position.y = frontier.position.y + math.sin(angle) * LASER_SCAN_RANGE_MAX
+                rayEndCell = self.poseToCell(rayEndPose, grid_map)
+                ray = self.bresenham_line(frontier_cell, rayEndCell)
+                for x, y in ray:
+                    if not (0 <= x < grid_map.width and 0 <= y < grid_map.height): break    # ray reaches map bounds
+                    if grid_map.data[y * gridMapP.width + x] == 1: break                    # ray reaches obstacle
+                    I_action += H[y, x]
             frontiersWeighted.append((frontier, I_action))
 
         frontiersWeighted.sort(key=lambda wf: -wf[1])

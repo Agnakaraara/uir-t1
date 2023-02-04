@@ -32,31 +32,19 @@ if __name__=="__main__":
             gridMapP = explor.grow_obstacles(gridmap, 0.3)
 
             #find free edges
-            points = explor.find_free_edge_frontiers(gridmap, gridMapP)
-
-            start = Pose()
-            for x in range(gridMapP.width):
-                for y in range(gridMapP.height):
-                    if gridMapP.data.reshape([gridmap.height, gridmap.width])[y, x] == 0:
-                        start = explor.cellToPose((x, y), gridmap)
-
-            odomentry = Odometry()
-            odomentry.pose = start
-            frontier = explor.pick_frontier_closest(points, gridMapP, odomentry)
-            path = explor.plan_path(gridmap, start, frontier)
-            path = explor.simplify_path(gridmap, path)
+            points = explor.find_inf_frontiers(gridmap, gridMapP)
 
             #plot the map
             fig, ax = plt.subplots()
             #plot the gridmap
-            gridMapP.plot(ax)
-            plt.plot([start.position.x], [start.position.y], '.', markersize=20)
-            path.plot(ax)
+            gridmap.plot(ax)
+           # plt.plot([start.position.x], [start.position.y], '.', markersize=20)
+           # path.plot(ax)
 
             #plot the cluster centers
             if points is not None:
                 for p in points:
-                    plt.plot([p.position.x],[p.position.y],'.', markersize=20)
+                    plt.plot([p[0].position.x],[p[0].position.y],'.', markersize=20)
 
             plt.xlabel('x[m]')
             plt.ylabel('y[m]')
