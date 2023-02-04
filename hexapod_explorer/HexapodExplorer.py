@@ -69,7 +69,7 @@ class HexapodExplorer:
     # t1c - Map, project M1 + M2
 
     def fuse_laser_scan(self, grid_map: OccupancyGrid, laser_scan: LaserScan, odometry: Odometry) -> OccupancyGrid:
-        """ Method to fuse the laser scan data sampled by the robot with a given 
+        """ Method to fuse the laser scan data sampled by the robot with a given
             odometry into the probabilistic occupancy grid map
         Args:
             grid_map: OccupancyGrid - gridmap to fuse te laser scan to
@@ -233,10 +233,13 @@ class HexapodExplorer:
             f = len(cells)
             D = LASER_SCAN_RANGE_MAX / grid_map.resolution
             n_r = int(1 + np.floor(f/D + 0.5))
-            kmeans = KMeans(n_clusters=n_r, random_state=0).fit(cells)
+            kmeans = KMeans(n_clusters=n_r, random_state=0, tol=1e-3, n_init=1, max_iter=100).fit(cells)
             for centroid in kmeans.cluster_centers_:
-                if dataP[int(centroid[1]), int(centroid[0])] == 0:    # ignore unreachable frontiers
+                if dataP[int(centroid[1]), int(centroid[0])] == 0:           # if centroid is reachable
                     pose_list.append(self.cellToPose(centroid, grid_map))
+                else:
+                    closest = min(cells, key=lambda cell: self.distanceOfCellsEuclidean(cell, centroid))   # closest reachable free-edge
+                    pose_list.append(self.cellToPose(closest, grid_map))
 
             # t1e
             #centroid = (0, 0)

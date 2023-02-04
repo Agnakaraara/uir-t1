@@ -31,9 +31,8 @@ class Explorer:
 
         gridMap = OccupancyGrid()
         gridMap.resolution = 0.1
-        gridMap.width = 100
-        gridMap.height = 100
-        gridMap.origin = Pose(Vector3(-5.0, -5.0, 0.0), Quaternion(1, 0, 0, 0))
+        gridMap.width = 1
+        gridMap.height = 1
         gridMap.data = 0.5 * np.ones(gridMap.height * gridMap.width)
         self.gridMap = gridMap
 
@@ -64,6 +63,7 @@ class Explorer:
             laser_scan = self.robot.laser_scan_
             odometry = self.robot.odometry_
             self.gridMap = self.explor.fuse_laser_scan(self.gridMap, laser_scan, odometry)
+            time.sleep(0.5)
 
     def planning(self):
         """ Planning thread that takes the constructed gridmap, find frontiers, and select the next goal with the navigation path """
@@ -84,6 +84,8 @@ class Explorer:
             if self.path is not None:
                 print("path set!")
 
+            time.sleep(0.5)
+
     def trajectory_following(self):
         """ trajectory following thread that assigns new goals to the robot navigation thread """
         while not self.stop:
@@ -97,6 +99,8 @@ class Explorer:
                 self.robot.goto(waypoint)
                 print("Goto:", waypoint)
 
+            time.sleep(0.5)
+
 
 if __name__ == "__main__":
     matplotlib.use('TkAgg')
@@ -108,8 +112,8 @@ if __name__ == "__main__":
     plt.ion()
     while True:
         plt.cla()   # clear axis
-        if ex0.gridMapP is not None and ex0.gridMapP.data is not None:
-            ex0.gridMapP.plot(axis)
+        if ex0.gridMap is not None and ex0.gridMap.data is not None:
+            ex0.gridMap.plot(axis)
         for frontier in ex0.frontiers:
             plt.plot([frontier.position.x], [frontier.position.y], '.', markersize=20)
         if ex0.path is not None:
