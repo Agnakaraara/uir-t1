@@ -702,7 +702,10 @@ class HexapodExplorer:
         cell = self.poseToCell(start, gridMapP)
         if self.isCellFree(cell, gridMapP): return cell
         goal_cell = self.poseToCell(goal, gridMapP)
-        return min(filter(lambda x: self.isCellFree(x, gridMapP), self.cellNeighbours(cell)), key=lambda x: self.distanceOfCellsEuclidean(x, goal_cell))
+        try:
+            return min(filter(lambda x: self.isCellFree(x, gridMapP), self.cellNeighbours(cell)), key=lambda x: self.distanceOfCellsEuclidean(x, goal_cell))
+        except:
+            return None
 
     def isCellFree(self, cell: tuple, gridMapP: OccupancyGrid) -> bool:
         return gridMapP.data[cell[1] * gridMapP.width + cell[0]] == 0

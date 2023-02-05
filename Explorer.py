@@ -23,6 +23,7 @@ class Explorer:
     frontiers: [Pose] = []
     path: Path = None
     currentWaypointIndex: int
+    stop = False
     robot: HexapodRobot
     explor = HexapodExplorer()
 
@@ -42,28 +43,27 @@ class Explorer:
         self.robot.stop_navigation()
         self.robot.turn_off()
 
-    def planning(self, master):
+    def planning(self, gridMap: OccupancyGrid, gridMapP: OccupancyGrid):
         """ Planning thread that takes the constructed gridmap, find frontiers, and select the next goal with the navigation path """
         odometry = self.robot.odometry_
-        gridMapP = copy.deepcopy(master.gridMapP)
-        if gridMapP is None or self.path is not None and self.explor.isPathTraversable([odometry.pose] + self.path.poses[self.currentWaypointIndex:], gridMapP) and self.robot.navigation_goal is not None: return
+        if self.stop or gridMapP is None or self.path is not None and self.explor.isPathTraversable([odometry.pose] + self.path.poses[self.currentWaypointIndex:], gridMapP) and self.robot.navigation_goal is not None: return
 
         start = odometry.pose
         goal: Pose
 
         if sys.argv[1] == "p1":
-            self.frontiers = self.explor.find_free_edge_frontiers(master.gridMap, gridMapP, odometry)
+            self.frontiers = self.explor.find_free_edge_frontiers(gridMap, gridMapP, odometry)
             goal = self.explor.pick_frontier_closest(self.frontiers, gridMapP, odometry)
         elif sys.argv[1] == "p2":
-            frontiers = self.explor.find_inf_frontiers(master.gridMap, gridMapP, odometry)
+            frontiers = self.explor.find_inf_frontiers(gridMap, gridMapP, odometry)
             self.frontiers = list(map(lambda x: x[0], frontiers))
             goal = self.explor.pick_frontier_inf(frontiers, gridMapP, odometry)
         elif sys.argv[1] == "p3":
-            self.frontiers = self.explor.find_free_edge_frontiers(master.gridMap, gridMapP, odometry)
+            self.frontiers = self.explor.find_free_edge_frontiers(gridMap, gridMapP, odometry)
             goal = self.explor.pick_frontier_tsp(self.frontiers, gridMapP, odometry)
 
         if len(self.frontiers) == 0:
-            master.stop = True
+            self.stop = True
             print(self.robot.robot.robot_id, ":", "No more frontiers! Stopping robot.")
             return
 
@@ -75,7 +75,7 @@ class Explorer:
 
     def trajectory_following(self):
         """ trajectory following thread that assigns new goals to the robot navigation thread """
-        while not master.stop:
+        while not self.stop:
             time.sleep(0.5)
             if self.path is None or self.currentWaypointIndex == len(self.path.poses)-1: continue
             if self.robot.navigation_goal is None or self.currentWaypointIndex == -1:   # if robot is not already going somewhere
@@ -93,13 +93,14 @@ class Master:
     explorers: [Explorer]
     explor = HexapodExplorer()
 
-    def __init__(self):
+    def __init__(self, explorers: int):
         gridMap = OccupancyGrid()
         gridMap.resolution = 0.1
         gridMap.width = 1
         gridMap.height = 1
         gridMap.data = 0.5 * np.ones(gridMap.height * gridMap.width)
         self.gridMap = gridMap
+        self.explorers = [Explorer(i) for i in range(explorers)]
 
     def start(self):
 
@@ -127,15 +128,19 @@ class Master:
     def planning(self):
         while not self.stop:
             time.sleep(0.5)
+            gridMap = copy.deepcopy(self.gridMap)
+            gridMapP = copy.deepcopy(self.gridMapP)
+            stop = True
             for ex in self.explorers:
-                ex.planning(self)
+                ex.planning(gridMap, gridMapP)
+                stop = stop and ex.stop
+            self.stop = stop
 
 
 if __name__ == "__main__":
     matplotlib.use('TkAgg')
 
-    master = Master()
-    master.explorers = [Explorer(0)]
+    master = Master(explorers=2)
     master.start()
 
     fig, axis = plt.subplots()
