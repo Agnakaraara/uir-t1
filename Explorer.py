@@ -44,36 +44,34 @@ class Explorer:
 
     def planning(self, master):
         """ Planning thread that takes the constructed gridmap, find frontiers, and select the next goal with the navigation path """
-        while not master.stop:
-            time.sleep(0.5)
-            odometry = self.robot.odometry_
-            gridMapP = copy.deepcopy(master.gridMapP)
-            if gridMapP is None or self.path is not None and self.explor.isPathTraversable([odometry.pose] + self.path.poses[self.currentWaypointIndex:], gridMapP) and self.robot.navigation_goal is not None: continue
+        odometry = self.robot.odometry_
+        gridMapP = copy.deepcopy(master.gridMapP)
+        if gridMapP is None or self.path is not None and self.explor.isPathTraversable([odometry.pose] + self.path.poses[self.currentWaypointIndex:], gridMapP) and self.robot.navigation_goal is not None: return
 
-            start = odometry.pose
-            goal: Pose
+        start = odometry.pose
+        goal: Pose
 
-            if sys.argv[1] == "p1":
-                self.frontiers = self.explor.find_free_edge_frontiers(master.gridMap, gridMapP, odometry)
-                goal = self.explor.pick_frontier_closest(self.frontiers, gridMapP, odometry)
-            elif sys.argv[1] == "p2":
-                frontiers = self.explor.find_inf_frontiers(master.gridMap, gridMapP, odometry)
-                self.frontiers = list(map(lambda x: x[0], frontiers))
-                goal = self.explor.pick_frontier_inf(frontiers, gridMapP, odometry)
-            elif sys.argv[1] == "p3":
-                self.frontiers = self.explor.find_free_edge_frontiers(master.gridMap, gridMapP, odometry)
-                goal = self.explor.pick_frontier_tsp(self.frontiers, gridMapP, odometry)
+        if sys.argv[1] == "p1":
+            self.frontiers = self.explor.find_free_edge_frontiers(master.gridMap, gridMapP, odometry)
+            goal = self.explor.pick_frontier_closest(self.frontiers, gridMapP, odometry)
+        elif sys.argv[1] == "p2":
+            frontiers = self.explor.find_inf_frontiers(master.gridMap, gridMapP, odometry)
+            self.frontiers = list(map(lambda x: x[0], frontiers))
+            goal = self.explor.pick_frontier_inf(frontiers, gridMapP, odometry)
+        elif sys.argv[1] == "p3":
+            self.frontiers = self.explor.find_free_edge_frontiers(master.gridMap, gridMapP, odometry)
+            goal = self.explor.pick_frontier_tsp(self.frontiers, gridMapP, odometry)
 
-            if len(self.frontiers) == 0:
-                master.stop = True
-                print("No more frontiers! Stopping robot.")
-                return
+        if len(self.frontiers) == 0:
+            master.stop = True
+            print(self.robot.robot.robot_id, ":", "No more frontiers! Stopping robot.")
+            return
 
-            pathRaw = self.explor.plan_path(gridMapP, start, goal)
-            pathSimple = self.explor.simplify_path(gridMapP, pathRaw)
-            self.path = pathSimple
-            self.currentWaypointIndex = -1
-            print("Path recalculated.")
+        pathRaw = self.explor.plan_path(gridMapP, start, goal)
+        pathSimple = self.explor.simplify_path(gridMapP, pathRaw)
+        self.path = pathSimple
+        self.currentWaypointIndex = -1
+        print(self.robot.robot.robot_id, ":", "Path recalculated.")
 
     def trajectory_following(self):
         """ trajectory following thread that assigns new goals to the robot navigation thread """
@@ -84,7 +82,7 @@ class Explorer:
                 self.currentWaypointIndex += 1
                 waypoint = self.path.poses[self.currentWaypointIndex]
                 self.robot.goto(waypoint)
-                print("Goto:", waypoint.position.x, waypoint.position.y)
+                print(self.robot.robot.robot_id, ":", "Goto:", waypoint.position.x, waypoint.position.y)
 
 
 class Master:
@@ -128,6 +126,7 @@ class Master:
 
     def planning(self):
         while not self.stop:
+            time.sleep(0.5)
             for ex in self.explorers:
                 ex.planning(self)
 

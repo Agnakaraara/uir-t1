@@ -87,7 +87,7 @@ class HexapodExplorer:
         laser_scan_cells = []
 
         for i, dist in enumerate(laser_scan.distances):
-            if dist < laser_scan.range_min or dist > laser_scan.range_max: continue
+            if dist < laser_scan.range_min: continue
             angle = laser_scan.angle_min + i * laser_scan.angle_increment
             relative = np.array([math.cos(angle) * dist, math.sin(angle) * dist]).T
             absolute = robot_rotation_matrix @ relative + robot_position
