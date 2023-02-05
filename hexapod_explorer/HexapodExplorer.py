@@ -247,7 +247,10 @@ class HexapodExplorer:
             #pose.position.y = centroid[1] * grid_map.resolution + grid_map.origin.position.y
             #pose_list.append(pose)
 
-        return list(filter(lambda frontier: self.isPoseReachable(frontier, odometry, gridMapP), frontiers))
+        if self.closestFreeCell(odometry.pose, odometry.pose, gridMapP) is not None:
+            frontiers = list(filter(lambda frontier: self.isPoseReachable(frontier, odometry, gridMapP), frontiers))
+
+        return frontiers
 
     # F3
 
