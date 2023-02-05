@@ -31,13 +31,9 @@ class Explorer:
         self.robot = HexapodRobot(robotID)
 
     def start(self):
-        """ method to connect to the simulated robot and start the navigation, localization, mapping and planning """
-
         self.robot.turn_on()
         self.robot.start_navigation()
-
-        traj_follow_thread = thread.Thread(target=self.trajectory_following)
-        traj_follow_thread.start()
+        thread.Thread(target=self.trajectory_following).start()
 
     def __del__(self):
         self.robot.stop_navigation()
@@ -104,15 +100,9 @@ class Master:
         self.explorers = [Explorer(i) for i in range(explorers)]
 
     def start(self):
-
-        for ex in self.explorers:
-            ex.start()
-
-        mapping_thread = Thread(target=self.mapping)
-        mapping_thread.start()
-
-        planning_thread = Thread(target=self.planning)
-        planning_thread.start()
+        for ex in self.explorers: ex.start()
+        Thread(target=self.mapping).start()
+        Thread(target=self.planning).start()
 
     def mapping(self):
         """ Mapping thread for fusing the laser scans into the grid map """
