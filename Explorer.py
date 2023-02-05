@@ -64,6 +64,7 @@ class Explorer:
 
         if len(self.frontiers) == 0:
             self.stop = True
+            self.path = None
             print(self.robot.robot.robot_id, ":", "No more frontiers! Stopping robot.")
             return
 
