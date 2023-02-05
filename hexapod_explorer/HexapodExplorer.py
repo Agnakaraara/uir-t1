@@ -258,7 +258,7 @@ class HexapodExplorer:
         """Method to find the frontiers based on information theory approach"""
 
         frontiersWeighted = []
-        rays = 8
+        rays = 16
 
         H = grid_map.data.copy()
         for x in range(len(H)):
@@ -272,7 +272,7 @@ class HexapodExplorer:
             frontier_cell = self.poseToCell(frontier, grid_map)
             I_action = 0.0
             for i in range(rays):
-                angle = i * math.pi/rays
+                angle = i * 2*math.pi/rays
                 rayEndPose = Pose()
                 rayEndPose.position.x = frontier.position.x + math.cos(angle) * LASER_SCAN_RANGE_MAX
                 rayEndPose.position.y = frontier.position.y + math.sin(angle) * LASER_SCAN_RANGE_MAX
