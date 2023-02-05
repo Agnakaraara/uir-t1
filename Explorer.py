@@ -35,9 +35,6 @@ class Explorer:
         self.robot.turn_on()
         self.robot.start_navigation()
 
-        planning_thread = Thread(target=self.planning)
-        planning_thread.start()
-
         traj_follow_thread = thread.Thread(target=self.trajectory_following)
         traj_follow_thread.start()
 
@@ -108,11 +105,14 @@ class Master:
 
     def start(self):
 
+        for ex in self.explorers:
+            ex.start()
+
         mapping_thread = Thread(target=self.mapping)
         mapping_thread.start()
 
-        for ex in self.explorers:
-            ex.start()
+        planning_thread = Thread(target=self.planning)
+        planning_thread.start()
 
     def mapping(self):
         """ Mapping thread for fusing the laser scans into the grid map """
@@ -125,6 +125,11 @@ class Master:
                 gridMapP = self.explor.grow_obstacles(gridMap, ROBOT_SIZE)
                 self.gridMap = gridMap
                 self.gridMapP = gridMapP
+
+    def planning(self):
+        while not self.stop:
+            for ex in self.explorers:
+                ex.planning(self)
 
 
 if __name__ == "__main__":
