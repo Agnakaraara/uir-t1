@@ -446,8 +446,6 @@ class HexapodExplorer:
                     path_simplified.poses.append(previous_pose)
                     break
 
-        path_simplified.poses = path_simplified.poses[1:]
-
         return path_simplified
 
     ###########################################################################

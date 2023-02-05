@@ -71,7 +71,7 @@ class Explorer:
         pathRaw = self.explor.plan_path(gridMapP, start, goal)
         pathSimple = self.explor.simplify_path(gridMapP, pathRaw)
         self.path = pathSimple
-        self.currentWaypointIndex = -1
+        self.currentWaypointIndex = 0
         print(self.robot.robot.robot_id, ":", "Path recalculated.")
 
     def trajectory_following(self):
@@ -79,7 +79,7 @@ class Explorer:
         while not self.stop:
             time.sleep(0.5)
             if self.path is None or self.currentWaypointIndex == len(self.path.poses)-1: continue
-            if self.robot.navigation_goal is None or self.currentWaypointIndex == -1:   # if robot is not already going somewhere
+            if self.robot.navigation_goal is None or self.currentWaypointIndex == 0:   # if robot is not already going somewhere
                 self.currentWaypointIndex += 1
                 waypoint = self.path.poses[self.currentWaypointIndex]
                 self.robot.goto(waypoint)
@@ -156,7 +156,7 @@ if __name__ == "__main__":
             for frontier in ex.frontiers:
                 plt.plot([frontier.position.x], [frontier.position.y], 'o')
             if ex.path is not None:
-                ex.path.plot(axis)
+                ex.path.plot(axis, style="point")
             if ex.robot.navigation_goal is not None:
                 plt.plot([ex.robot.navigation_goal.position.x], [ex.robot.navigation_goal.position.y], 'x', markersize=10)
         plt.xlabel('x[m]')
