@@ -386,12 +386,10 @@ class HexapodExplorer:
         """
 
         data = gridMapP.data.copy().reshape(gridMapP.height, gridMapP.width)
-        startCell = self.poseToCell(start, gridMapP)
-        data[startCell[1], startCell[0]] = 0
         gmap = OccupancyGridMap(data, gridMapP.resolution)
 
         try:
-            result = a_star(startCell, self.poseToCell(goal, gridMapP), gmap)
+            result = a_star(self.closestFreeCell(start, goal, gridMapP), self.poseToCell(goal, gridMapP), gmap)
         except:
             return None            # start or end are blocked
 
@@ -697,14 +695,11 @@ class HexapodExplorer:
     def isPoseReachable(self, pose: Pose, odometry: Odometry, gridMapP: OccupancyGrid) -> bool:
         return self.plan_path(gridMapP, odometry.pose, pose) is not None
 
-    def closestFreeCell(self, pose: Pose, gridMapP: OccupancyGrid) -> tuple:
-        cell = self.poseToCell(pose, gridMapP)
+    def closestFreeCell(self, start: Pose, goal: Pose, gridMapP: OccupancyGrid) -> tuple:
+        cell = self.poseToCell(start, gridMapP)
         if self.isCellFree(cell, gridMapP): return cell
-        for neighbour in self.cellNeighbours(cell):
-            if self.isCellFree(neighbour, gridMapP):
-                return neighbour
-        print("No neighbour free.")
-        return cell
+        goal_cell = self.poseToCell(goal, gridMapP)
+        return min(filter(lambda x: self.isCellFree(x, gridMapP), self.cellNeighbours(cell)), key=lambda x: self.distanceOfCellsEuclidean(x, goal_cell))
 
     def isCellFree(self, cell: tuple, gridMapP: OccupancyGrid) -> bool:
         return gridMapP.data[cell[1] * gridMapP.width + cell[0]] == 0

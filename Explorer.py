@@ -135,7 +135,7 @@ if __name__ == "__main__":
     matplotlib.use('TkAgg')
 
     master = Master()
-    master.explorers = [Explorer(0), Explorer(1)]
+    master.explorers = [Explorer(0)]
     master.start()
 
     fig, axis = plt.subplots()
